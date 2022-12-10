@@ -1,7 +1,7 @@
 use itertools::Itertools;
+use tracing::debug;
 
 use crate::{Natural, Polynomial, Ring};
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PrimitiveRootOfUnity<R> {
@@ -12,7 +12,7 @@ pub struct PrimitiveRootOfUnity<R> {
 
 impl<R> PrimitiveRootOfUnity<R> {
     /// Definition 8.5
-    pub fn new(n: impl Into<Natural>, omega: R) -> Option<PrimitiveRootOfUnity<R>>
+    pub fn new(n: Natural, omega: R) -> Option<PrimitiveRootOfUnity<R>>
     where
         R: Ring,
     {
@@ -20,13 +20,15 @@ impl<R> PrimitiveRootOfUnity<R> {
         let mut inverse = omega.clone();
         let mut pow = omega.clone();
 
-        for _ in 1..u128::from(n) {
+        for i in 1..u128::from(n) {
+            // println!("{omega:?}^{i} = {pow:?}");
             if pow.is_one() || pow.is_zero() {
                 return None;
             }
             inverse = pow.clone();
             pow = pow * omega.clone();
         }
+        // println!("{omega:?}^{n:?} = {pow:?}");
         if !pow.is_one() {
             return None;
         }
@@ -46,6 +48,16 @@ impl<R> PrimitiveRootOfUnity<R> {
     pub fn inverse(self) -> R {
         self.inverse
     }
+    pub fn sq(self) -> Self
+    where
+        R: Clone + std::ops::Mul<Output = R>,
+    {
+        PrimitiveRootOfUnity {
+            nth: self.nth * 2,
+            value: self.value.clone() * self.value,
+            inverse: self.inverse.clone() * self.inverse,
+        }
+    }
 }
 impl<R> std::ops::Deref for PrimitiveRootOfUnity<R> {
     type Target = R;
@@ -54,7 +66,6 @@ impl<R> std::ops::Deref for PrimitiveRootOfUnity<R> {
         &self.value
     }
 }
-
 
 pub trait DFTInput<R> {
     fn coef_at(&self, pow: Natural) -> R;
@@ -79,33 +90,48 @@ where
     }
 }
 
-pub fn fft<R: Ring + std::fmt::Debug>(k: Natural, f: Polynomial<R>, omega: R) -> Vec<R> {
+pub fn fft<R: Ring + std::fmt::Debug>(
+    k: Natural,
+    f: Polynomial<R>,
+    omega: PrimitiveRootOfUnity<R>,
+) -> Vec<R> {
     // pub fn fft<R: Ring + std::fmt::Debug>(k: Natural, f: impl DFTInput<R>, omega: R) -> Vec<R> {
-    if k.is_zero() {
+
+    let span = tracing::span!(
+        tracing::Level::DEBUG,
+        "FFT",
+        omega = format!("{:?}", omega.clone().inner()),
+        f = format!("{:?}", f)
+    );
+    let _enter = span.enter();
+
+    if k == 0 {
         vec![f.evaluate_at(R::zero())]
     } else {
-        let n_div_2 = Natural::from(2).pow(k - 1.into());
+        let n_div_2 = 2u128.pow((k - 1) as _);
 
         let r0 = f
             .iter()
-            .take(n_div_2.into())
+            .take(n_div_2 as _)
             .map(|(c, pow)| c.clone() + f.coef_at(n_div_2 + pow))
             .collect_vec();
         let r0 = Polynomial::new(r0);
         let r1 = f
             .iter()
-            .take(n_div_2.into())
+            .take(n_div_2 as _)
             .map(|(c, pow)| (c.clone() - f.coef_at(n_div_2 + pow)) * omega.pow(pow))
             .collect_vec();
         let r1 = Polynomial::new(r1);
 
-        // eprintln!("{r0:?}");
-        // eprintln!("{r1:?}");
+        debug!("r0 = {r0:?}");
+        debug!("r1 = {r1:?}");
 
-        let omega_sq = omega.clone() * omega;
+        let omega_sq =
+            PrimitiveRootOfUnity::new(omega.n() / 2, omega.clone().inner() * omega.inner())
+                .unwrap();
 
-        let r0_eval = fft(k - 1.into(), r0, omega_sq.clone());
-        let r1_eval = fft(k - 1.into(), r1, omega_sq);
+        let r0_eval = fft(k - 1, r0, omega_sq.clone());
+        let r1_eval = fft(k - 1, r1, omega_sq);
 
         let res = r0_eval
             .into_iter()
@@ -114,13 +140,15 @@ pub fn fft<R: Ring + std::fmt::Debug>(k: Natural, f: Polynomial<R>, omega: R) ->
 
         assert_eq!(res.len(), 2usize.pow(u128::from(k) as u32));
 
+        debug!("result = {res:?}");
+
         res
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Finite, Polynomial};
+    use crate::{dft::PrimitiveRootOfUnity, Finite, Polynomial};
 
     #[test]
     fn simple_fft() {
@@ -130,7 +158,7 @@ mod tests {
 
         eprintln!("{f:?}");
 
-        let res = super::fft(2.into(), f, 2u128.into());
+        let res = super::fft(2, f, PrimitiveRootOfUnity::new(4, 2u128.into()).unwrap());
 
         // panic!("{res:?}");
     }

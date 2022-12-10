@@ -26,8 +26,8 @@ impl<F> MonomialOrder<F> for PLex {
             .iter()
             .cloned()
             .map(|idx| {
-                let l = l.powers.get(idx).cloned().unwrap_or(Natural::zero());
-                let r = r.powers.get(idx).cloned().unwrap_or(Natural::zero());
+                let l = l.powers.get(idx).cloned().unwrap_or(0);
+                let r = r.powers.get(idx).cloned().unwrap_or(0);
 
                 r.cmp(&l)
             })
@@ -55,16 +55,14 @@ where
                 .zip_longest(other.powers.iter())
                 .map(|ps| match ps {
                     itertools::EitherOrBoth::Both(l, r) => l == r,
-                    itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => {
-                        p.is_zero()
-                    }
+                    itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => *p == 0,
                 })
                 .all(|x| x)
     }
 }
 
 impl<F> Monomial<F> {
-    pub fn new(coef: impl Into<F>, powers: Vec<impl Into<Natural>>) -> Self {
+    pub fn new(coef: impl Into<F>, powers: Vec<Natural>) -> Self {
         Monomial {
             coef: coef.into(),
             powers: powers.into_iter().map_into().collect(),
@@ -132,8 +130,8 @@ impl<F> Monomial<F> {
                 }
                 itertools::EitherOrBoth::Left(l) => Some(*l),
                 itertools::EitherOrBoth::Right(r) => {
-                    if r.is_zero() {
-                        Some(0.into())
+                    if *r == 0 {
+                        Some(0)
                     } else {
                         None
                     }
@@ -157,7 +155,7 @@ where
         if Identity::<Addition>::is_identity(&self.coef) {
             write!(f, "0")
         } else if Identity::<Multiplication>::is_identity(&self.coef)
-            && self.powers.iter().all(|p| p.is_zero())
+            && self.powers.iter().all(|p| *p == 0)
         {
             write!(f, "1")
         } else {
@@ -173,7 +171,7 @@ where
                     .iter()
                     .enumerate()
                     .filter_map(|(idx, p)| {
-                        if p.is_zero() {
+                        if *p == 0 {
                             None
                         } else if Identity::<Multiplication>::is_identity(p) {
                             Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
@@ -181,7 +179,7 @@ where
                             Some(format!(
                                 "{}{}",
                                 ["x", "y", "z", "v", "w"][idx],
-                                num_to_superscript((*p).into())
+                                num_to_superscript(*p as _)
                             ))
                         }
                     })

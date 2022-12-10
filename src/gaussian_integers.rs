@@ -137,6 +137,6 @@ impl<F: Ring> Ring for Gaussian<F> {
 impl<F: Domain> Domain for Gaussian<F> {}
 impl EuclideanDomain for Gaussian<Integer> {
     fn d(&self) -> Option<Natural> {
-        Some(self.a.abs_nat().pow(2u128.into()) + self.b.abs_nat().pow(2u128.into()))
+        Some(self.a.unsigned_abs().pow(2) + self.b.unsigned_abs().pow(2))
     }
 }

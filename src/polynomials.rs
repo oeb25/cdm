@@ -118,7 +118,7 @@ where
         let m = b.deg();
 
         assert!(n >= m, "n = {n:?}, m = {m:?} ({a:?}, {b:?})");
-        assert!(m >= Natural::from(0));
+        assert!(m >= 0);
 
         let mut r = a.clone();
         let u = b.lc().multiplicative_inverse()?;
@@ -193,7 +193,7 @@ where
         Polynomial::new(
             (1..=self.deg().into())
                 .map(|i| {
-                    self.coefficients[i].clone()
+                    self.coefficients[i as usize].clone()
                         * (0..i).map(|_| F::one()).reduce(|a, b| a + b).unwrap()
                 })
                 .collect(),

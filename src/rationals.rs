@@ -55,8 +55,8 @@ impl Rational {
         }
 
         Rational {
-            num: Integer::from(num),
-            denom: Natural::from(denom),
+            num: num as _,
+            denom,
         }
     }
     pub fn abs(self) -> Self {
@@ -70,7 +70,7 @@ impl Rational {
             return Self::zero();
         }
 
-        let mut n = u128::from(self.num.abs_nat());
+        let mut n = u128::from(self.num.unsigned_abs());
         let mut m = u128::from(self.denom);
 
         while m != 0 {
@@ -113,7 +113,7 @@ impl std::ops::Add for Rational {
 
     fn add(self, rhs: Self) -> Self::Output {
         Rational {
-            num: self.num * rhs.denom.into() + Integer::from(self.denom) * rhs.num,
+            num: self.num * rhs.denom as i128 + self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
         }
         .normalized()
@@ -124,7 +124,7 @@ impl std::ops::Sub for Rational {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Rational {
-            num: self.num * rhs.denom.into() - Integer::from(self.denom) * rhs.num,
+            num: self.num * rhs.denom as i128 - self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
         }
         .normalized()
@@ -154,11 +154,11 @@ impl std::ops::Div for Rational {
     fn div(self, rhs: Self) -> Self::Output {
         Rational {
             num: if rhs.num == rhs.num.abs() {
-                self.num * rhs.denom.into()
+                self.num * rhs.denom as i128
             } else {
-                -self.num * rhs.denom.into()
+                -self.num * rhs.denom as i128
             },
-            denom: self.denom * rhs.num.abs_nat(),
+            denom: self.denom * rhs.num.unsigned_abs(),
         }
         .normalized()
     }
@@ -199,12 +199,12 @@ impl Ring for Rational {
         Some(match i128::from(self.num) {
             0 => 0.into(),
             x if x < 0 => Rational {
-                num: -Integer::from(self.denom),
-                denom: self.num.abs_nat(),
+                num: -(self.denom as i128),
+                denom: self.num.unsigned_abs(),
             },
             _ => Rational {
-                num: self.denom.into(),
-                denom: self.num.abs_nat(),
+                num: self.denom as i128,
+                denom: self.num.unsigned_abs(),
             },
         })
     }

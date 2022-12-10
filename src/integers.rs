@@ -1,69 +1,39 @@
-use derive_more::{Add, Div, From, Into, Mul, Neg, Rem, Sub};
-
 use crate::{
+    domain::Domain,
     euclidean_domain::EuclideanDomain,
     group::AbelianGroup,
     identity::{Addition, Identity, Multiplication},
     Group, Natural, Ring,
 };
 
-#[derive(
-    Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Add, Sub, Neg, Rem, Mul, Div, From, Into,
-)]
-#[mul(forward)]
-#[div(forward)]
-#[rem(forward)]
-pub struct Integer {
-    value: i128,
-}
-impl std::fmt::Debug for Integer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.value.fmt(f)
-    }
-}
-impl Integer {
-    pub fn abs(self) -> Self {
-        Integer {
-            value: self.value.abs(),
-        }
-    }
-    pub fn abs_nat(self) -> Natural {
-        self.value.unsigned_abs().into()
-    }
-}
-impl From<Natural> for Integer {
-    fn from(n: Natural) -> Self {
-        Integer {
-            value: u128::from(n) as _,
-        }
-    }
-}
+pub type Integer = i128;
 
-impl Identity<Addition> for Integer {
+impl Identity<Addition> for i128 {
     fn identity() -> Self {
-        Integer { value: 0 }
+        0
     }
 }
-impl Group for Integer {}
-impl AbelianGroup for Integer {}
-impl Identity<Multiplication> for Integer {
+impl Group for i128 {}
+impl AbelianGroup for i128 {}
+impl Identity<Multiplication> for i128 {
     fn identity() -> Self {
         1.into()
     }
 }
-impl Ring for Integer {
+impl Ring for i128 {
     fn multiplicative_inverse(&self) -> Option<Self> {
-        if self.value == -1 {
-            Some(Integer { value: -1 })
-        } else if self.value == 1 {
-            Some(Integer { value: 1 })
+        if *self == -1 {
+            Some(-1)
+        } else if *self == 1 {
+            Some(1)
         } else {
             None
         }
     }
 }
-impl EuclideanDomain for Integer {
+impl Domain for i128 {}
+impl EuclideanDomain for i128 {
     fn d(&self) -> Option<Natural> {
-        Some(self.abs_nat())
+        Some(self.unsigned_abs())
     }
 }

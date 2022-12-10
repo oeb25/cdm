@@ -12,10 +12,10 @@ pub fn fast_convolution<R: Ring>(
     g: Polynomial<R>,
     omega: PrimitiveRootOfUnity<R>,
 ) -> Polynomial<R> {
-    assert_eq!(Natural::from(2).pow(k), omega.n());
+    assert_eq!(2u128.pow(k as _), omega.n());
 
-    let alpha = dft::fft(k, f, omega.clone().inner());
-    let beta = dft::fft(k, g, omega.clone().inner());
+    let alpha = dft::fft(k, f, omega.clone());
+    let beta = dft::fft(k, g, omega.clone());
     eprintln!("alpha = {alpha:?}");
     eprintln!("beta = {beta:?}");
     let gamma = alpha
@@ -25,10 +25,13 @@ pub fn fast_convolution<R: Ring>(
         .collect_vec();
     eprintln!("gamma = {gamma:?}");
 
-    let n_in_r = (0..i128::from(omega.n()))
+    let n_in_r = (0..omega.n() as _)
         .map(|_| R::one())
         .fold(R::zero(), |a, b| a + b);
 
-    Polynomial::new(dft::fft(k, Polynomial::new(gamma), omega.inverse()))
-        * Polynomial::new(vec![n_in_r.multiplicative_inverse().unwrap()])
+    Polynomial::new(dft::fft(
+        k,
+        Polynomial::new(gamma),
+        PrimitiveRootOfUnity::new(omega.n(), omega.inverse()).unwrap(),
+    )) * Polynomial::new(vec![n_in_r.multiplicative_inverse().unwrap()])
 }

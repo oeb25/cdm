@@ -43,7 +43,7 @@ where
         if Identity::<Addition>::is_identity(self.coef()) {
             write!(f, "0");
         } else if Identity::<Multiplication>::is_identity(self.coef())
-            && self.powers().iter().all(|p| p.is_zero())
+            && self.powers().iter().all(|p| *p == 0)
         {
             write!(f, "1");
         } else {
@@ -59,7 +59,7 @@ where
                     .iter()
                     .enumerate()
                     .filter_map(|(idx, p)| {
-                        if p.is_zero() {
+                        if *p == 0 {
                             None
                         } else if Identity::<Multiplication>::is_identity(p) {
                             Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
@@ -80,9 +80,9 @@ where
 
 impl ToLatex for Rational {
     fn to_latex(&self) -> String {
-        if self.denom == 1.into() {
+        if self.denom == 1 {
             format!("{:?}", self.num)
-        } else if self.denom == 1.into() {
+        } else if self.denom == 1 {
             format!("-{:?}", self.num)
         } else if self.num == self.num.abs() {
             format!("\\nicefrac{{{:?}}}{{{:?}}}", self.num.abs(), self.denom)

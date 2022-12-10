@@ -12,13 +12,7 @@ use cdm::{
 use itertools::Itertools;
 
 fn main() {
-    // test_exam();
-
-    type R = Integer;
-
-    let res = ExtendedEuclideanAlgorithm::perform(&R::from(12i128), &R::from(29i128));
-
-    println!("{res:?}")
+    old_exam();
 }
 
 fn exercise_8_10() {
@@ -35,7 +29,7 @@ fn exercise_8_10() {
 
     // (iii)
     for j in 0..8 {
-        let o = omega.pow(Natural::from(j));
+        let o = omega.pow(j);
 
         let alpha_j = f.evaluate_at(o);
         let beta_j = g.evaluate_at(o);
@@ -46,7 +40,7 @@ fn exercise_8_10() {
     }
 
     // (v)
-    let res = ch08::fast_convolution(3.into(), f, g, omega);
+    let res = ch08::fast_convolution(3, f, g, omega);
     println!("{:?}", h);
     println!("{:?}", res);
 }
@@ -75,13 +69,13 @@ fn old_exam() {
                 .iter()
                 .enumerate()
                 .map(|(pow, n)| Natural::from(pow as u128 + 1) * *n)
-                .fold(Natural::zero(), |a, b| a + b);
+                .fold(0, |a, b| a + b);
             let b = r
                 .powers()
                 .iter()
                 .enumerate()
                 .map(|(pow, n)| Natural::from(pow as u128 + 1) * *n)
-                .fold(Natural::zero(), |a, b| a + b);
+                .fold(0, |a, b| a + b);
 
             b.cmp(&a).then_with(|| PLex::default().ord(l, r))
         }
