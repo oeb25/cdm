@@ -1,93 +1,15 @@
-mod ch08;
-pub mod count_ops;
-pub mod dft;
-mod domain;
-mod euclidean_domain;
-mod field;
-pub mod finite;
-mod gaussian_integers;
-mod groebner;
-mod group;
-mod identity;
-mod integers;
-mod latex;
-mod mono;
-mod multi_eval;
-mod multivariate_polynomials;
-mod naturals;
-mod newton_interpolation;
-mod polynomials;
-mod rationals;
-mod reals;
-mod ring;
-
-pub use finite::Finite;
-pub use group::Group;
-pub use integers::Integer;
-use mono::Monomial;
-pub use naturals::Natural;
-pub use polynomials::Polynomial;
-pub use rationals::Rational;
-pub use reals::Real;
-pub use ring::Ring;
-
-use itertools::Itertools;
-
-use crate::{
+use cdm::{
+    ch08,
     dft::PrimitiveRootOfUnity,
     euclidean_domain::ExtendedEuclideanAlgorithm,
     gaussian_integers::Gaussian,
+    groebner,
     latex::ToLatex,
     mono::{MonomialOrder, PLex},
     multivariate_polynomials::{multivariate_division_with_remainder, MultivariatePolynomial},
+    Finite, Integer, Monomial, Natural, Polynomial, Rational, Ring,
 };
-
-pub const fn digits_superscript(c: char) -> Option<char> {
-    Some(match c {
-        '0' => '⁰',
-        '1' => '¹',
-        '2' => '²',
-        '3' => '³',
-        '4' => '⁴',
-        '5' => '⁵',
-        '6' => '⁶',
-        '7' => '⁷',
-        '8' => '⁸',
-        '9' => '⁹',
-        '+' => '⁺',
-        '-' => '⁻',
-        '=' => '⁼',
-        '(' => '⁽',
-        ')' => '⁾',
-        _ => return None,
-    })
-}
-pub const fn digits_subscript(c: char) -> Option<char> {
-    Some(match c {
-        '0' => '₀',
-        '1' => '₁',
-        '2' => '₂',
-        '3' => '₃',
-        '4' => '₄',
-        '5' => '₅',
-        '6' => '₆',
-        '7' => '₇',
-        '8' => '₈',
-        '9' => '₉',
-        '+' => '₊',
-        '-' => '₋',
-        '=' => '₌',
-        '(' => '₍',
-        ')' => '₎',
-        _ => return None,
-    })
-}
-pub fn num_to_superscript(n: i128) -> String {
-    n.to_string().chars().flat_map(digits_superscript).collect()
-}
-pub fn num_to_subscript(n: i128) -> String {
-    n.to_string().chars().flat_map(digits_subscript).collect()
-}
+use itertools::Itertools;
 
 fn main() {
     // test_exam();
@@ -144,9 +66,9 @@ fn test_exam() {
 }
 
 fn old_exam() {
-    struct FuckOrdering;
+    struct CustomOrdering;
 
-    impl MonomialOrder<Finite<5>> for FuckOrdering {
+    impl MonomialOrder<Finite<5>> for CustomOrdering {
         fn ord(&self, l: &Monomial<Finite<5>>, r: &Monomial<Finite<5>>) -> std::cmp::Ordering {
             let a = l
                 .powers()
@@ -167,7 +89,7 @@ fn old_exam() {
 
     type R = Finite<5>;
 
-    let ord = FuckOrdering;
+    let ord = CustomOrdering;
 
     let g1: MultivariatePolynomial<R> = mpoly([(1i128, &[3]), (-1i128, &[0, 0, 1])]);
     let g2: MultivariatePolynomial<R> = mpoly([(-1i128, &[1]), (1i128, &[0, 1])]);
