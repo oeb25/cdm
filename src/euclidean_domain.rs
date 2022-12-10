@@ -15,6 +15,47 @@ pub struct ExtendedEuclideanAlgorithm<D> {
     pub q: Vec<D>,
 }
 
+impl<D: std::fmt::Debug> std::fmt::Display for ExtendedEuclideanAlgorithm<D> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use comfy_table::{
+            modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, Attribute, Cell, ContentArrangement,
+            Table,
+        };
+
+        let mut table = Table::new();
+        table
+            .load_preset(UTF8_FULL)
+            .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic);
+
+        table.set_header(
+            ["i", "q", "r", "s", "t"].map(|t| Cell::new(t).add_attribute(Attribute::Bold)),
+        );
+
+        for i in 0..self.r.len() {
+            if i == self.r.len() - 1 {
+                table.add_row([
+                    format!("{i}"),
+                    "".to_string(),
+                    format!("{:?}", self.r[i]),
+                    format!("{:?}", self.s[i]),
+                    format!("{:?}", self.t[i]),
+                ]);
+            } else {
+                table.add_row([
+                    format!("{i}"),
+                    format!("{:?}", self.q[i]),
+                    format!("{:?}", self.r[i]),
+                    format!("{:?}", self.s[i]),
+                    format!("{:?}", self.t[i]),
+                ]);
+            }
+        }
+
+        write!(f, "{table}")
+    }
+}
+
 impl<D: EuclideanDomain + PartialEq + std::fmt::Debug> ExtendedEuclideanAlgorithm<D> {
     pub fn perform(f: &D, g: &D) -> Self {
         let mut r = vec![f.clone(), g.clone()];
