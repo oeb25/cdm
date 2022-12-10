@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 72cef0ac88cbda096761b25c0c84affecc406df489c59b7c29547b2713d22d02 # shrinks to uv = [(0, 0), (0, 0)]
+cc 92deec8ca49855bc4bc2061cde9274e601c4d676d2b109d4bb1f30c57cdcc4ef # shrinks to uv = []
+cc e6b182baa855bc51f3a773896f3f29e951072d19118a9fe382b87f51739da6fc # shrinks to uv = [(1, 0), (3, 3), (8, 0), (12, 4), (20, 5), (23, 1), (30, 2), (37, 1), (43, 0)]
