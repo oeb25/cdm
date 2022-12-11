@@ -1,8 +1,14 @@
 use cdm::{
-    ch08, ch21::multivariate_division_with_remainder, dft::PrimitiveRootOfUnity,
-    euclidean_domain::ExtendedEuclideanAlgorithm, gaussian_integers::Gaussian, groebner,
-    latex::ToLatex, mono::PLex, multivariate_polynomials::MultivariatePolynomial,
-    rationals::rational, Finite, Integer, Polynomial, Rational, Ring,
+    ch08,
+    ch21::{buchbergers_algorithm, minimize_groebner_basis, multivariate_division_with_remainder},
+    dft::PrimitiveRootOfUnity,
+    euclidean_domain::ExtendedEuclideanAlgorithm,
+    gaussian_integers::Gaussian,
+    latex::ToLatex,
+    mono::PLex,
+    multivariate_polynomials::MultivariatePolynomial,
+    rationals::rational,
+    Finite, Integer, Polynomial, Rational, Ring,
 };
 use itertools::Itertools;
 
@@ -125,10 +131,10 @@ fn home_work2() {
 
     // println!("{}", table.latex_table(&ord));
 
-    let mut res = groebner::buchbergers_algorithm(&fs);
+    let mut res = buchbergers_algorithm(&fs);
 
     eprintln!("One: {res:#?}");
-    groebner::minimize_groebner_basis(&mut res);
+    minimize_groebner_basis(&mut res);
     eprintln!("Two: {res:#?}");
 
     let g1 = z(1) - rational(9.) * y(5) + rational(1. / 2.) * y(3);
@@ -140,10 +146,10 @@ fn home_work2() {
     eprintln!("{g3:?}");
 
     let gs = [g1, g2, g3];
-    let mut basis = groebner::buchbergers_algorithm(&gs);
+    let mut basis = buchbergers_algorithm(&gs);
 
     eprintln!("Pre:  {basis:#?}");
-    groebner::minimize_groebner_basis(&mut basis);
+    minimize_groebner_basis(&mut basis);
     eprintln!("Post: {basis:#?}");
 
     for i in 0..gs.len() {

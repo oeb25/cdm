@@ -10,7 +10,6 @@ pub mod euclidean_domain;
 pub mod field;
 pub mod finite;
 pub mod gaussian_integers;
-pub mod groebner;
 pub mod group;
 pub mod identity;
 pub mod integers;

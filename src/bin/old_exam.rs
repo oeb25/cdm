@@ -1,7 +1,6 @@
 use cdm::{
-    ch21::multivariate_division_with_remainder,
+    ch21::{buchbergers_algorithm, minimize_groebner_basis, multivariate_division_with_remainder},
     dft::{fft, PrimitiveRootOfUnity},
-    groebner::{buchbergers_algorithm, minimize_groebner_basis},
     mono::{plex, MonomialOrder},
     multivariate_polynomials::MultivariatePolynomial,
     Finite, Monomial, Natural, Polynomial,
@@ -90,9 +89,6 @@ fn q3() {
     // (a)
 
     // (b)
-
-    // let g1 = mpoly::<F, 2>([(1i128, &[3]), (-1i128, &[0, 0, 1])]);
-    // let g2 = mpoly::<F, 2>([(-1i128, &[1]), (1i128, &[0, 1])]);
 
     let [x, y, z] = MultivariatePolynomial::init(CustomOrdering);
     let g1 = x(3) - z(1);
