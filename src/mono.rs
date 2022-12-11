@@ -8,10 +8,11 @@ use crate::{
     num_to_superscript, Natural, Ring,
 };
 
-pub trait MonomialOrder<F> {
-    fn ord(&self, l: &Monomial<F>, r: &Monomial<F>) -> Ordering;
+pub trait MonomialOrder<F>: Clone + std::fmt::Debug {
+    fn ord(&self, l: &Monomial<F, Self>, r: &Monomial<F, Self>) -> Ordering;
 }
 
+#[derive(Debug, Clone)]
 pub struct PLex(pub Vec<usize>);
 
 impl Default for PLex {
@@ -21,13 +22,13 @@ impl Default for PLex {
 }
 
 impl<F> MonomialOrder<F> for PLex {
-    fn ord(&self, l: &Monomial<F>, r: &Monomial<F>) -> Ordering {
+    fn ord(&self, l: &Monomial<F, Self>, r: &Monomial<F, Self>) -> Ordering {
         self.0
             .iter()
             .cloned()
             .map(|idx| {
-                let l = l.powers.get(idx).cloned().unwrap_or(0);
-                let r = r.powers.get(idx).cloned().unwrap_or(0);
+                let l = l.powers().get(idx).cloned().unwrap_or(0);
+                let r = r.powers().get(idx).cloned().unwrap_or(0);
 
                 r.cmp(&l)
             })
@@ -36,23 +37,49 @@ impl<F> MonomialOrder<F> for PLex {
     }
 }
 
-#[derive(Clone, Default)]
-pub struct Monomial<F> {
-    coef: F,
-    powers: Vec<Natural>,
+pub fn plex<F, O>(ord: Option<&[usize]>, l: &Monomial<F, O>, r: &Monomial<F, O>) -> Ordering
+where
+    O: MonomialOrder<F>,
+{
+    ord.map(|ord| ord.to_vec())
+        .unwrap_or_else(|| (0..10).collect_vec())
+        .into_iter()
+        .map(|idx| {
+            let l = l.powers().get(idx).cloned().unwrap_or(0);
+            let r = r.powers().get(idx).cloned().unwrap_or(0);
+
+            r.cmp(&l)
+        })
+        .find(|o: &Ordering| !o.is_eq())
+        .unwrap_or(Ordering::Equal)
 }
 
-impl<F> PartialEq for Monomial<F>
+#[derive(Clone)]
+pub enum Monomial<F, O: MonomialOrder<F>> {
+    Constant(F),
+    Mono {
+        ord: O,
+        coef: F,
+        powers: Vec<Natural>,
+    },
+}
+impl<F: Default, O: MonomialOrder<F>> Default for Monomial<F, O> {
+    fn default() -> Self {
+        Monomial::Constant(F::default())
+    }
+}
+
+impl<F, O> PartialEq for Monomial<F, O>
 where
     F: PartialEq,
+    O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
-        // TODO
-        self.coef == other.coef
+        self.coef() == other.coef()
             && self
-                .powers
+                .powers()
                 .iter()
-                .zip_longest(other.powers.iter())
+                .zip_longest(other.powers().iter())
                 .map(|ps| match ps {
                     itertools::EitherOrBoth::Both(l, r) => l == r,
                     itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => *p == 0,
@@ -61,53 +88,82 @@ where
     }
 }
 
-impl<F> Monomial<F> {
-    pub fn new(coef: impl Into<F>, powers: Vec<Natural>) -> Self {
-        Monomial {
+impl<F, O: MonomialOrder<F>> Monomial<F, O> {
+    pub fn new(ord: O, coef: impl Into<F>, powers: Vec<Natural>) -> Self {
+        Monomial::Mono {
+            ord,
             coef: coef.into(),
-            powers: powers.into_iter().map_into().collect(),
+            powers,
         }
     }
-    pub fn constant(coef: impl Into<F>) -> Self {
-        Monomial {
-            coef: coef.into(),
-            powers: vec![],
+    pub fn try_new(ord: Option<O>, coef: impl Into<F>, powers: Vec<Natural>) -> Option<Self> {
+        if let Some(ord) = ord {
+            Some(Monomial::new(ord.clone(), coef.into(), powers))
+        } else {
+            if powers.is_empty() || powers.iter().all(|c| *c == 0) {
+                Some(Monomial::constant(None, coef.into()))
+            } else {
+                None
+            }
         }
     }
-    pub fn zero() -> Self
+    pub fn coef(&self) -> &F {
+        match self {
+            Monomial::Constant(coef) | Monomial::Mono { coef, .. } => coef,
+        }
+    }
+    pub fn ord(&self) -> Option<&O> {
+        match self {
+            Monomial::Constant(_) => None,
+            Monomial::Mono { ord, .. } => Some(ord),
+        }
+    }
+    pub fn constant(ord: Option<O>, coef: impl Into<F>) -> Self {
+        if let Some(ord) = ord {
+            Monomial::new(ord, coef, vec![])
+        } else {
+            Monomial::Constant(coef.into())
+        }
+    }
+    pub fn zero(ord: Option<O>) -> Self
     where
         F: Identity<Addition>,
     {
-        Monomial {
-            coef: <F as Identity<Addition>>::identity(),
-            powers: vec![],
-        }
+        Self::constant(ord, <F as Identity<Addition>>::identity())
     }
     pub fn is_zero(&self) -> bool
     where
         F: Identity<Addition>,
     {
-        self.coef == <F as Identity<Addition>>::identity()
-    }
-    pub fn coef(&self) -> &F {
-        &self.coef
+        <F as Identity<Addition>>::is_identity(self.coef())
     }
     pub fn powers(&self) -> &[Natural] {
-        &self.powers
+        match self {
+            Monomial::Constant(_) => &[],
+            Monomial::Mono { powers, .. } => powers,
+        }
     }
-    pub fn without_coef(&self) -> Monomial<F>
+    pub fn without_coef(&self) -> Monomial<F, O>
     where
         F: Identity<Multiplication>,
     {
-        Monomial {
-            coef: F::identity(),
-            powers: self.powers.clone(),
+        self.map_coef(|_| F::identity())
+    }
+    pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Monomial<F, O> {
+        match self {
+            Monomial::Constant(coef) => Monomial::Constant(f(coef)),
+            Monomial::Mono { ord, coef, powers } => Monomial::Mono {
+                ord: ord.clone(),
+                coef: f(coef),
+                powers: powers.clone(),
+            },
         }
     }
-    pub fn map_coef<T>(&self, f: impl FnOnce(&F) -> T) -> Monomial<T> {
-        Monomial {
-            coef: f(&self.coef),
-            powers: self.powers.clone(),
+    pub fn ord_from<'a>(&'a self, rhs: &'a Self) -> Option<&'a O> {
+        match (self, rhs) {
+            (Monomial::Constant(_), Monomial::Constant(_)) => None,
+            (Monomial::Mono { ord, .. }, _) => Some(ord),
+            (_, Monomial::Mono { ord, .. }) => Some(ord),
         }
     }
     pub fn div(&self, rhs: &Self) -> Option<Self>
@@ -117,9 +173,9 @@ impl<F> Monomial<F> {
         // eprintln!("try div {self:?}/{rhs:?}");
 
         let powers = self
-            .powers
+            .powers()
             .iter()
-            .zip_longest(rhs.powers.iter())
+            .zip_longest(rhs.powers())
             .map(|ps| match ps {
                 itertools::EitherOrBoth::Both(l, r) => {
                     if l >= r {
@@ -137,37 +193,38 @@ impl<F> Monomial<F> {
                     }
                 }
             })
-            .collect::<Option<_>>();
+            .collect::<Option<_>>()?;
 
-        let res = Monomial::new(self.coef.clone() / rhs.coef.clone(), powers.clone()?);
-
-        // eprintln!("gives ==> ({:?}) {:?}", res, powers);
-
-        Some(res)
+        Self::try_new(
+            self.ord_from(rhs).cloned(),
+            self.coef().clone() / rhs.coef().clone(),
+            powers,
+        )
     }
 }
 
-impl<F> std::fmt::Debug for Monomial<F>
+impl<F, O> std::fmt::Debug for Monomial<F, O>
 where
     F: std::fmt::Debug + Identity<Addition> + Identity<Multiplication>,
+    O: MonomialOrder<F>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if Identity::<Addition>::is_identity(&self.coef) {
+        if Identity::<Addition>::is_identity(self.coef()) {
             write!(f, "0")
-        } else if Identity::<Multiplication>::is_identity(&self.coef)
-            && self.powers.iter().all(|p| *p == 0)
+        } else if Identity::<Multiplication>::is_identity(self.coef())
+            && self.powers().iter().all(|p| *p == 0)
         {
             write!(f, "1")
         } else {
             write!(
                 f,
                 "{}{}",
-                if Identity::<Multiplication>::is_identity(&self.coef) {
+                if Identity::<Multiplication>::is_identity(self.coef()) {
                     "".to_string()
                 } else {
-                    format!("{:?}", self.coef)
+                    format!("{:?}", self.coef())
                 },
-                self.powers
+                self.powers()
                     .iter()
                     .enumerate()
                     .filter_map(|(idx, p)| {
@@ -189,9 +246,10 @@ where
     }
 }
 
-impl<F> std::ops::Mul for Monomial<F>
+impl<F, O> std::ops::Mul for Monomial<F, O>
 where
     F: Ring,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
@@ -199,46 +257,49 @@ where
         let l = format!("{:?}", self);
         let r = format!("{:?}", rhs);
 
-        let res = Monomial {
-            coef: self.coef * rhs.coef,
-            powers: self
-                .powers
+        Self::try_new(
+            self.ord_from(&rhs).cloned(),
+            self.coef().clone() * rhs.coef().clone(),
+            self.powers()
                 .iter()
                 .cloned()
-                .zip_longest(rhs.powers.iter().cloned())
+                .zip_longest(rhs.powers().iter().cloned())
                 .map(|p| p.reduce(|l, r| l + r))
                 .collect(),
-        };
-
-        // eprintln!("MONO: {l}*{r} = {res:?}");
-
-        res
+        )
+        .unwrap()
     }
 }
-impl<F> std::ops::Mul<F> for Monomial<F>
+impl<F, O> std::ops::Mul<F> for Monomial<F, O>
 where
     F: Ring,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
     fn mul(self, rhs: F) -> Self::Output {
-        Monomial {
-            coef: self.coef * rhs,
-            powers: self.powers.clone(),
-        }
+        Self::try_new(
+            self.ord().cloned(),
+            self.coef().clone() * rhs,
+            self.powers().to_vec(),
+        )
+        .unwrap()
     }
 }
 
-impl<F> std::ops::Div<F> for Monomial<F>
+impl<F, O> std::ops::Div<F> for Monomial<F, O>
 where
     F: Field,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
     fn div(self, rhs: F) -> Self::Output {
-        Monomial {
-            coef: self.coef / rhs,
-            powers: self.powers,
-        }
+        Self::try_new(
+            self.ord().cloned(),
+            self.coef().clone() / rhs,
+            self.powers().to_vec(),
+        )
+        .unwrap()
     }
 }

@@ -28,6 +28,7 @@ pub use finite::Finite;
 pub use group::Group;
 pub use integers::Integer;
 pub use mono::Monomial;
+use mono::MonomialOrder;
 pub use naturals::Natural;
 pub use polynomials::Polynomial;
 pub use rationals::Rational;
@@ -83,21 +84,25 @@ pub fn num_to_subscript(n: i128) -> String {
     n.to_string().chars().flat_map(digits_subscript).collect()
 }
 
-pub fn mpoly<F: Ring, const N: usize>(
+pub fn mpoly<F: Ring, const N: usize, O: MonomialOrder<F>>(
+    ord: O,
     terms: [(impl Into<F>, &[u128]); N],
-) -> MultivariatePolynomial<F> {
+) -> MultivariatePolynomial<F, O> {
     let terms = terms
         .into_iter()
-        .map(|(c, ps)| Monomial::new(c.into(), ps.to_vec()))
+        .map(|(c, ps)| Monomial::new(ord.clone(), c.into(), ps.to_vec()))
         .collect();
 
-    MultivariatePolynomial { terms }
+    MultivariatePolynomial::new(ord, terms)
 }
-pub fn mpoly_rat<const N: usize>(terms: [(f64, &[u128]); N]) -> MultivariatePolynomial<Rational> {
+pub fn mpoly_rat<const N: usize, O: MonomialOrder<Rational>>(
+    ord: O,
+    terms: [(f64, &[u128]); N],
+) -> MultivariatePolynomial<Rational, O> {
     let terms = terms
         .into_iter()
-        .map(|(c, ps)| Monomial::new(Rational::approximate(c), ps.to_vec()))
+        .map(|(c, ps)| Monomial::new(ord.clone(), Rational::approximate(c), ps.to_vec()))
         .collect();
 
-    MultivariatePolynomial { terms }
+    MultivariatePolynomial::new(ord, terms)
 }

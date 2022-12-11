@@ -1,8 +1,8 @@
 use crate::{
     identity::{Addition, Identity, Multiplication},
-    mono::Monomial,
+    mono::{Monomial, MonomialOrder},
     multivariate_polynomials::MultivariatePolynomial,
-    Finite, Natural, Rational,
+    Finite, Natural, Rational, Ring,
 };
 use itertools::Itertools;
 
@@ -10,15 +10,15 @@ pub trait ToLatex {
     fn to_latex(&self) -> String;
 }
 
-impl<F> ToLatex for MultivariatePolynomial<F>
+impl<F, O> ToLatex for MultivariatePolynomial<F, O>
 where
-    F: ToLatex + Identity<Addition> + Identity<Multiplication>,
+    F: ToLatex + Clone + Ring,
+    O: MonomialOrder<F>,
 {
     fn to_latex(&self) -> String {
         let s = format!(
             "{}",
-            self.terms
-                .iter()
+            self.terms()
                 .filter(|t| !t.is_zero())
                 .map(|t| t.to_latex())
                 .format(" + ")
@@ -31,9 +31,10 @@ where
     }
 }
 
-impl<F> ToLatex for Monomial<F>
+impl<F, O> ToLatex for Monomial<F, O>
 where
     F: ToLatex + Identity<Addition> + Identity<Multiplication>,
+    O: MonomialOrder<F>,
 {
     fn to_latex(&self) -> String {
         use std::fmt::Write;

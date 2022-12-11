@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 comfy-table = "6.1.2"
 derive_more = "0.99.17"
+either = "1.8.0"
 itertools = "0.10.5"
 regex = "1.7.0"
 tracing = "0.1.37"

@@ -2,28 +2,32 @@ use crate::{
     field::Field,
     group::AbelianGroup,
     identity::{Addition, Identity, Multiplication},
-    Group, Ring,
+    Group, Integer, Natural, Ring,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Finite<const N: u128> {
-    val: u128,
+pub fn finite<const N: Natural>(x: Integer) -> Finite<N> {
+    Finite::from(x)
 }
-impl<const N: u128> std::fmt::Debug for Finite<N> {
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Finite<const N: Natural> {
+    val: Natural,
+}
+impl<const N: Natural> std::fmt::Debug for Finite<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.val.fmt(f)
     }
 }
-impl<const N: u128> From<u128> for Finite<N> {
-    fn from(i: u128) -> Self {
+impl<const N: Natural> From<Natural> for Finite<N> {
+    fn from(i: Natural) -> Self {
         Finite { val: i % N }
     }
 }
-impl<const N: u128> From<i128> for Finite<N> {
-    fn from(i: i128) -> Self {
+impl<const N: Natural> From<Integer> for Finite<N> {
+    fn from(i: Integer) -> Self {
         if i >= 0 {
             Finite {
-                val: (i as u128) % N,
+                val: (i as Natural) % N,
             }
         } else {
             -Finite {
@@ -33,48 +37,48 @@ impl<const N: u128> From<i128> for Finite<N> {
     }
 }
 
-impl<const N: u128> std::ops::Add for Finite<N> {
+impl<const N: Natural> std::ops::Add for Finite<N> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
         ((self.val + rhs.val) % N).into()
     }
 }
-impl<const N: u128> std::ops::Neg for Finite<N> {
+impl<const N: Natural> std::ops::Neg for Finite<N> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
         ((N - self.val) % N).into()
     }
 }
-impl<const N: u128> std::ops::Sub for Finite<N> {
+impl<const N: Natural> std::ops::Sub for Finite<N> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         self + (-rhs)
     }
 }
-impl<const N: u128> Identity<Addition> for Finite<N> {
+impl<const N: Natural> Identity<Addition> for Finite<N> {
     fn identity() -> Self {
         Finite { val: 0 }
     }
 }
-impl<const N: u128> Group for Finite<N> {}
-impl<const N: u128> AbelianGroup for Finite<N> {}
+impl<const N: Natural> Group for Finite<N> {}
+impl<const N: Natural> AbelianGroup for Finite<N> {}
 
-impl<const N: u128> std::ops::Mul for Finite<N> {
+impl<const N: Natural> std::ops::Mul for Finite<N> {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
         ((self.val * rhs.val) % N).into()
     }
 }
-impl<const N: u128> Identity<Multiplication> for Finite<N> {
+impl<const N: Natural> Identity<Multiplication> for Finite<N> {
     fn identity() -> Self {
         Finite { val: 1 }
     }
 }
-impl<const N: u128> Ring for Finite<N> {
+impl<const N: Natural> Ring for Finite<N> {
     fn multiplicative_inverse(&self) -> Option<Self> {
         (1..N)
             .find(|x| (x * self.val) % N == 1)
@@ -85,11 +89,11 @@ impl<const N: u128> Ring for Finite<N> {
     where
         Self: Clone,
     {
-        self.val.pow(u128::from(pow) as u32).into()
+        self.val.pow(Natural::from(pow) as u32).into()
     }
 }
 
-impl<const N: u128> std::ops::Div for Finite<N> {
+impl<const N: Natural> std::ops::Div for Finite<N> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self::Output {
@@ -103,4 +107,4 @@ impl<const N: u128> std::ops::Div for Finite<N> {
         0u128.into()
     }
 }
-impl<const N: u128> Field for Finite<N> {}
+impl<const N: Natural> Field for Finite<N> {}

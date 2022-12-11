@@ -1,28 +1,28 @@
+use either::Either;
 use itertools::Itertools;
 
 use crate::{
     field::Field,
+    group::AbelianGroup,
     identity::{Addition, Identity, Multiplication},
-    latex::ToLatex,
-    mono::{Monomial, MonomialOrder, PLex},
-    Group, Natural, Rational, Ring,
+    mono::{Monomial, MonomialOrder},
+    Finite, Group, Integer, Natural, Rational, Real, Ring,
 };
 
 #[derive(Clone)]
-pub struct MultivariatePolynomial<F> {
-    pub terms: Vec<Monomial<F>>,
+pub enum MultivariatePolynomial<F, O: MonomialOrder<F>> {
+    Constant(F),
+    Terms { ord: O, terms: Vec<Monomial<F, O>> },
 }
 
-impl<F> PartialEq for MultivariatePolynomial<F>
+impl<F, O> PartialEq for MultivariatePolynomial<F, O>
 where
-    F: Identity<Addition> + Clone + PartialEq,
+    F: Ring,
+    O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
-        // TODO
-        let ord = PLex::default();
-
-        self.terms_sorted(&ord)
-            .zip_longest(other.terms_sorted(&ord))
+        self.terms()
+            .zip_longest(other.terms())
             .map(|ps| match ps {
                 itertools::EitherOrBoth::Both(l, r) => l == r,
                 itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => false,
@@ -31,15 +31,13 @@ where
     }
 }
 
-impl<F> std::fmt::Debug for MultivariatePolynomial<F>
+impl<F, O> std::fmt::Debug for MultivariatePolynomial<F, O>
 where
-    F: std::fmt::Debug + Identity<Addition> + Identity<Multiplication>,
+    F: std::fmt::Debug + Ring,
+    O: MonomialOrder<F>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = format!(
-            "{:?}",
-            self.terms.iter().filter(|t| !t.is_zero()).format(" + ")
-        );
+        let s = format!("{:?}", self.terms().filter(|t| !t.is_zero()).format(" + "));
         if s.is_empty() {
             write!(f, "0")
         } else {
@@ -48,151 +46,193 @@ where
     }
 }
 
-impl<F> MultivariatePolynomial<F>
+impl<F, O> MultivariatePolynomial<F, O>
 where
-    F: Identity<Addition> + Clone,
+    F: Ring,
+    O: MonomialOrder<F>,
 {
-    pub fn sort_by(&mut self, ord: &impl MonomialOrder<F>) {
-        self.terms.sort_by(|a, b| ord.ord(a, b));
+    pub fn init<const N: usize>(ord: O) -> [impl Fn(Natural) -> MultivariatePolynomial<F, O>; N] {
+        std::array::from_fn(|i| {
+            let ord = ord.clone();
+            move |p| {
+                let mut vs = vec![0; i + 1];
+                vs[i] = p;
+                MultivariatePolynomial::new(
+                    ord.clone(),
+                    vec![Monomial::new(ord.clone(), F::one(), vs)],
+                )
+            }
+        })
     }
-    pub fn sorted_by(&self, ord: &impl MonomialOrder<F>) -> Self {
-        let mut new = self.clone();
-        new.sort_by(ord);
-        new
+    pub fn new(ord: O, mut terms: Vec<Monomial<F, O>>) -> Self {
+        terms.sort_by(|l, r| ord.ord(l, r));
+
+        let terms = terms
+            .into_iter()
+            .group_by(|t| t.without_coef())
+            .into_iter()
+            .map(|(a, b)| a * b.map(|t| t.coef().clone()).reduce(|a, b| a + b).unwrap())
+            .collect();
+
+        MultivariatePolynomial::Terms { ord, terms }
     }
-    pub fn leading_term(&self, ord: &impl MonomialOrder<F>) -> Monomial<F> {
-        self.terms
-            .iter()
-            .min_by(|l, r| ord.ord(l, r))
-            .cloned()
-            .unwrap_or_else(|| Monomial::zero())
+    pub fn try_new(ord: Option<O>, terms: Vec<Monomial<F, O>>) -> Option<Self> {
+        let ord = ord.or_else(|| terms.iter().find_map(|t| t.ord().cloned()));
+
+        if let Some(ord) = ord {
+            Some(Self::new(ord, terms))
+        } else {
+            let mut coef = F::zero();
+
+            for t in &terms {
+                if !t.powers().is_empty() || t.powers().iter().any(|p| *p != 0) {
+                    return None;
+                }
+                coef = coef + t.coef().clone();
+            }
+            Some(Self::Constant(coef))
+        }
     }
-    pub fn leading_coef(&self, ord: &impl MonomialOrder<F>) -> F {
-        self.leading_term(ord).coef().clone()
+    pub fn ord(&self) -> Option<&O> {
+        match self {
+            MultivariatePolynomial::Constant(_) => None,
+            MultivariatePolynomial::Terms { ord, .. } => Some(ord),
+        }
     }
-    pub fn leading_monomial(&self, ord: &impl MonomialOrder<F>) -> Monomial<F>
+    pub fn leading_term(&self) -> Monomial<F, O> {
+        self.terms()
+            .min_by(|l, r| self.ord().unwrap().ord(l, r))
+            .unwrap_or_else(|| Monomial::zero(self.ord().cloned()))
+    }
+    pub fn leading_coef(&self) -> F {
+        self.leading_term().coef().clone()
+    }
+    pub fn leading_monomial(&self) -> Monomial<F, O>
     where
         F: Identity<Multiplication>,
     {
-        self.leading_term(ord).without_coef()
+        self.leading_term().without_coef()
     }
-    pub fn multi_deg(&self, ord: &impl MonomialOrder<F>) -> Vec<Natural> {
+    pub fn multi_deg(&self) -> Vec<Natural> {
         todo!()
     }
-    pub fn terms_sorted(&self, ord: &impl MonomialOrder<F>) -> impl Iterator<Item = &Monomial<F>> {
-        self.terms
-            .iter()
-            .filter(|t| !t.is_zero())
-            .sorted_by(|l, r| ord.ord(l, r))
+    pub fn terms(&self) -> impl Iterator<Item = Monomial<F, O>> + Clone + '_ {
+        match self {
+            MultivariatePolynomial::Constant(c) => {
+                Either::Left([Monomial::constant(self.ord().cloned(), c.clone())].into_iter())
+            }
+            MultivariatePolynomial::Terms { terms, .. } => Either::Right(terms.iter().cloned()),
+        }
+        .filter(|t| !t.is_zero())
     }
-    pub fn normalized(&self) -> Self
-    where
-        F: Ring + Clone + std::fmt::Debug,
-    {
-        let ord = PLex::default();
-
-        let terms = self
-            .terms_sorted(&ord)
-            .group_by(|t| t.without_coef())
-            .into_iter()
-            .map(|(a, b)| a * b.map(|t| t.coef()).cloned().reduce(|a, b| a + b).unwrap())
-            .collect();
-
-        MultivariatePolynomial { terms }
-    }
-    pub fn minimize(&self, ord: &impl MonomialOrder<F>) -> Self
+    pub fn minimize(&self) -> Self
     where
         F: Field,
     {
         let terms = self
-            .terms_sorted(ord)
-            .map(|t| t.clone() / self.leading_coef(ord))
+            .terms()
+            .map(|t| t.clone() / self.leading_coef())
             .collect();
 
-        MultivariatePolynomial { terms }
+        Self::try_new(self.ord().cloned(), terms).unwrap()
     }
-    pub fn s_polynomial(&self, other: &Self, ord: &impl MonomialOrder<F>) -> Self
+    pub fn s_polynomial(&self, other: &Self) -> Self
     where
         F: Field + std::fmt::Debug,
     {
+        let ord = self.ord().or_else(|| other.ord()).unwrap();
+
         let lcm = self
-            .leading_term(ord)
+            .leading_term()
             .powers()
             .iter()
             .copied()
-            .zip_longest(other.leading_term(ord).powers().iter().copied())
+            .zip_longest(other.leading_term().powers().iter().copied())
             .map(|ps| ps.reduce(|a, b| a.max(b)))
             .collect_vec();
 
-        let lcm = Monomial::new(F::one(), lcm.clone());
+        let lcm = Monomial::new(ord.clone(), F::one(), lcm.clone());
 
         let l = lcm
-            .div(&self.leading_term(ord))
-            .unwrap_or_else(|| panic!("{lcm:?}/{:?} failed", self.leading_term(ord)));
+            .div(&self.leading_term())
+            .unwrap_or_else(|| panic!("{lcm:?}/{:?} failed", self.leading_term()));
         let r = lcm
-            .div(&other.leading_term(ord))
-            .unwrap_or_else(|| panic!("{lcm:?}/{:?} failed", other.leading_term(ord)));
+            .div(&other.leading_term())
+            .unwrap_or_else(|| panic!("{lcm:?}/{:?} failed", other.leading_term()));
 
         let l = MultivariatePolynomial::from(l);
         let r = MultivariatePolynomial::from(r);
 
-        let res = l * self.clone() - r * other.clone();
-
-        res.normalized().sorted_by(ord)
+        l * self.clone() - r * other.clone()
     }
-    pub fn div_mono(&self, m: &Monomial<F>) -> Option<Self>
+    pub fn div_mono(&self, m: &Monomial<F, O>) -> Option<Self>
     where
         F: Field + std::fmt::Debug,
     {
-        let terms = self.terms.iter().map(|t| t.div(m)).collect::<Option<_>>()?;
+        let terms = self.terms().map(|t| t.div(m)).collect::<Option<_>>()?;
 
-        Some(MultivariatePolynomial { terms })
+        Self::try_new(self.ord().or_else(|| m.ord()).cloned(), terms)
+    }
+
+    pub fn constant(ord: Option<O>, c: impl Into<F>) -> Self {
+        if let Some(ord) = ord {
+            Self::new(ord.clone(), vec![Monomial::new(ord, c, vec![])])
+        } else {
+            Self::Constant(c.into())
+        }
     }
 }
 
-impl<F> From<Monomial<F>> for MultivariatePolynomial<F> {
-    fn from(value: Monomial<F>) -> Self {
-        MultivariatePolynomial { terms: vec![value] }
-    }
-}
-
-impl<F> std::ops::Add for MultivariatePolynomial<F>
+impl<F, O> From<Monomial<F, O>> for MultivariatePolynomial<F, O>
 where
     F: Ring,
+    O: MonomialOrder<F>,
+{
+    fn from(value: Monomial<F, O>) -> Self {
+        Self::try_new(value.ord().cloned(), vec![value]).unwrap()
+    }
+}
+
+impl<F, O> std::ops::Add for MultivariatePolynomial<F, O>
+where
+    F: Ring,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        MultivariatePolynomial {
-            terms: self
-                .terms
+        Self::try_new(
+            self.ord().or_else(|| rhs.ord()).cloned(),
+            self.terms()
                 .into_iter()
-                .chain(rhs.terms.into_iter())
+                .chain(rhs.terms().into_iter())
                 .collect(),
-        }
-        .normalized()
+        )
+        .unwrap()
     }
 }
-impl<F> std::ops::Neg for MultivariatePolynomial<F>
+impl<F, O> std::ops::Neg for MultivariatePolynomial<F, O>
 where
-    F: Ring + Clone,
+    F: Ring,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        MultivariatePolynomial {
-            terms: self
-                .terms
+        Self::try_new(
+            self.ord().cloned(),
+            self.terms()
                 .into_iter()
                 .map(|t| t.map_coef(|c| -c.clone()))
                 .collect(),
-        }
-        .normalized()
+        )
+        .unwrap()
     }
 }
-impl<F> std::ops::Sub for MultivariatePolynomial<F>
+impl<F, O> std::ops::Sub for MultivariatePolynomial<F, O>
 where
-    F: Ring + Clone,
+    F: Ring,
+    O: MonomialOrder<F>,
 {
     type Output = Self;
 
@@ -201,247 +241,129 @@ where
     }
 }
 
-impl<F: Group> Identity<Addition> for MultivariatePolynomial<F> {
+impl<F: Ring, O> Identity<Addition> for MultivariatePolynomial<F, O>
+where
+    O: MonomialOrder<F>,
+{
     fn identity() -> Self {
-        MultivariatePolynomial { terms: vec![] }
+        MultivariatePolynomial::Constant(F::zero())
     }
 }
-impl<F: Ring> Group for MultivariatePolynomial<F> {}
+impl<F: Ring, O> Group for MultivariatePolynomial<F, O> where O: MonomialOrder<F> {}
+impl<F: Ring, O> AbelianGroup for MultivariatePolynomial<F, O> where O: MonomialOrder<F> {}
 
-impl<F: Ring> std::ops::Mul for MultivariatePolynomial<F> {
+impl<F: Ring, O> Identity<Multiplication> for MultivariatePolynomial<F, O>
+where
+    O: MonomialOrder<F>,
+{
+    fn identity() -> Self {
+        MultivariatePolynomial::Constant(F::one())
+    }
+}
+impl<F: Ring, O> Ring for MultivariatePolynomial<F, O>
+where
+    O: MonomialOrder<F>,
+{
+    fn multiplicative_inverse(&self) -> Option<Self> {
+        todo!()
+    }
+}
+
+impl<F: Ring, O> std::ops::Mul for MultivariatePolynomial<F, O>
+where
+    O: MonomialOrder<F>,
+{
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
         let terms = self
-            .terms
-            .iter()
-            .cartesian_product(rhs.terms.iter())
+            .terms()
+            .cartesian_product(rhs.terms())
             .map(|(a, b)| a.clone() * b.clone())
             .collect();
 
-        MultivariatePolynomial { terms }.normalized()
+        MultivariatePolynomial::try_new(self.ord().or_else(|| rhs.ord()).cloned(), terms).unwrap()
     }
 }
 
-#[test]
-fn multi_poly_test_1() {
-    let f = MultivariatePolynomial {
-        terms: vec![
-            Monomial::new(1, vec![2, 1]),
-            Monomial::new(1, vec![1, 2]),
-            Monomial::new(1, vec![0, 2]),
-        ],
-    };
-    let f1 = MultivariatePolynomial {
-        terms: vec![Monomial::new(1, vec![1, 1]), Monomial::constant(-1)],
-    };
-    let f2 = MultivariatePolynomial {
-        terms: vec![Monomial::new(1, vec![0, 2]), Monomial::constant(-1)],
-    };
+impl<O, const N: Natural> std::ops::Mul<MultivariatePolynomial<Finite<N>, O>> for Finite<N>
+where
+    O: MonomialOrder<Finite<N>>,
+{
+    type Output = MultivariatePolynomial<Finite<N>, O>;
 
-    multivariate_division_with_remainder::<Rational>(&PLex(vec![0, 1]), &f, &[f1, f2]);
+    fn mul(self, rhs: MultivariatePolynomial<Finite<N>, O>) -> Self::Output {
+        MultivariatePolynomial::constant(None, self) * rhs
+    }
 }
+impl<O> std::ops::Mul<MultivariatePolynomial<Rational, O>> for Rational
+where
+    O: MonomialOrder<Rational>,
+{
+    type Output = MultivariatePolynomial<Rational, O>;
 
-#[test]
-fn multi_poly_test_2() {
-    let f = MultivariatePolynomial {
-        terms: vec![
-            Monomial::new(1, vec![2, 1]),
-            Monomial::new(1, vec![0, 10]),
-            Monomial::constant(1),
-        ],
+    fn mul(self, rhs: MultivariatePolynomial<Rational, O>) -> Self::Output {
+        MultivariatePolynomial::constant(None, self) * rhs
     }
-    .normalized();
-    let f1 = MultivariatePolynomial {
-        terms: vec![Monomial::new(1, vec![1]), Monomial::constant(1)],
-    }
-    .normalized();
-    let f2 = MultivariatePolynomial {
-        terms: vec![Monomial::new(1, vec![0, 7]), Monomial::constant(-1)],
-    }
-    .normalized();
-    let f3 = MultivariatePolynomial {
-        terms: vec![Monomial::new(1, vec![1, 5]), Monomial::constant(5)],
-    }
-    .normalized();
-
-    multivariate_division_with_remainder::<Rational>(&PLex(vec![0, 1]), &f, &[f1, f2, f3]);
 }
+impl<O> std::ops::Mul<MultivariatePolynomial<Integer, O>> for Integer
+where
+    O: MonomialOrder<Integer>,
+{
+    type Output = MultivariatePolynomial<Integer, O>;
 
-pub struct MultivariateDivisionWithRemainder<F> {
-    pub f: MultivariatePolynomial<F>,
-    pub fs: Vec<MultivariatePolynomial<F>>,
-    pub rows: Vec<Vec<MultivariatePolynomial<F>>>,
+    fn mul(self, rhs: MultivariatePolynomial<Integer, O>) -> Self::Output {
+        MultivariatePolynomial::constant(None, self) * rhs
+    }
 }
+impl<O> std::ops::Mul<MultivariatePolynomial<Real, O>> for Real
+where
+    O: MonomialOrder<Real>,
+{
+    type Output = MultivariatePolynomial<Real, O>;
 
-impl<F: Field + std::fmt::Debug> MultivariateDivisionWithRemainder<F> {
-    fn new(f: MultivariatePolynomial<F>, fs: Vec<MultivariatePolynomial<F>>) -> Self {
-        Self {
-            f,
-            fs,
-            rows: vec![],
-        }
-    }
-
-    fn add_row(
-        &mut self,
-        p: MultivariatePolynomial<F>,
-        mut q: Vec<MultivariatePolynomial<F>>,
-        r: MultivariatePolynomial<F>,
-    ) {
-        q.insert(0, p);
-        q.push(r);
-        self.rows.push(q);
-    }
-
-    pub fn latex_table(&self, ord: &impl MonomialOrder<F>) -> String
-    where
-        F: ToLatex + Identity<Addition> + Identity<Multiplication>,
-    {
-        use std::fmt::Write;
-
-        let mut buf = String::new();
-
-        write!(buf, "\\begin{{array}}{{r");
-        for _ in &self.fs {
-            write!(buf, "|r");
-        }
-        writeln!(buf, "|l}}");
-
-        write!(buf, "\\multicolumn{{1}}{{c}}{{p}}");
-        for (i, _) in self.fs.iter().enumerate() {
-            write!(buf, "& \\multicolumn{{1}}{{|c}}{{q_{i}}}");
-        }
-        write!(buf, "& \\multicolumn{{1}}{{|c}}{{r}}");
-        writeln!(buf, "\\\\ \\hline");
-
-        for e in &self.rows {
-            write!(buf, "{}", e[0].sorted_by(ord).to_latex());
-            for p in &e[1..] {
-                write!(buf, "& {}", p.sorted_by(ord).to_latex());
-            }
-            writeln!(buf, " \\\\ \\hline");
-        }
-
-        writeln!(buf, "\\end{{array}}");
-
-        buf
-        // $$
-        // \begin{array}{r|r|r|r|l}
-        // \multicolumn{1}{c|}{p} & \multicolumn{1}{c|}{q_1} & \multicolumn{1}{c|}{q_2} & \multicolumn{1}{c|}{q_3} & \multicolumn{1}{c}{r} \\\hline
-        // - 2y^2z + 2z -2x^2y + 2xy & 0 & 0 & 0 & 0 \\\hline
-        // 2z -3x^2 y +4 x y -y & 0 & 0 & y & 0 \\\hline
-        // -3x^2 y +4 x y -y & 0 & 0 & y &  2z \\\hline
-        // 4 x y + 3y^3 -4 y & -3 y & 0 & y &  2z \\\hline
-        // 3y^3 - 4y & -3 y & 0 & y & 2z + 4 x y \\\hline
-        // -4y & -3 y & 0 & y & 2z +4 x y + 3 y^3 \\\hline
-        // 0 & -3 y & 0 & y & 2z +4 x y + 3 y^3  -4 y \\\hline
-        // \end{array}
-        // $$
-    }
-
-    pub fn ascii_table(&self, ord: &impl MonomialOrder<F>) -> comfy_table::Table {
-        use comfy_table::{
-            modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, ContentArrangement, Table,
-        };
-
-        let mut table = Table::new();
-        table
-            .load_preset(UTF8_FULL)
-            .apply_modifier(UTF8_ROUND_CORNERS)
-            .set_content_arrangement(ContentArrangement::Dynamic);
-
-        table.set_header(
-            std::iter::once("p".to_string())
-                // .chain(fs.iter().enumerate().map(|(i, _)| format!("q{i}")))
-                .chain(self.fs.iter().enumerate().map(|(i, f)| format!("{f:?}")))
-                .chain(std::iter::once("r".to_string())),
-        );
-
-        for row in &self.rows {
-            let p = &row[0];
-            let q = &row[1..row.len() - 1];
-            let r = row.last().unwrap();
-
-            table.add_row(
-                std::iter::once(format!("{:?}", p.sorted_by(ord)))
-                    .chain(q.iter().map(|q| format!("{:?}", q.sorted_by(ord))))
-                    .chain(std::iter::once(format!("{:?}", r.sorted_by(ord)))),
-            );
-        }
-
-        table
-    }
-
-    pub(crate) fn remainder(&self) -> MultivariatePolynomial<F> {
-        self.rows.last().unwrap().last().unwrap().clone()
+    fn mul(self, rhs: MultivariatePolynomial<Real, O>) -> Self::Output {
+        MultivariatePolynomial::constant(None, self) * rhs
     }
 }
 
-/// Algorithm 21.11
-pub fn multivariate_division_with_remainder<F: Field + std::fmt::Debug>(
-    ord: &impl MonomialOrder<F>,
-    f: &MultivariatePolynomial<F>,
-    fs: &[MultivariatePolynomial<F>],
-) -> MultivariateDivisionWithRemainder<F> {
-    let span = tracing::span!(
-        tracing::Level::DEBUG,
-        "MVDWR",
-        f = format!("{:?}", f),
-        fs = format!("{:?}", fs)
-    );
-    let _enter = span.enter();
+impl<O, const N: Natural> std::ops::Mul<Finite<N>> for MultivariatePolynomial<Finite<N>, O>
+where
+    O: MonomialOrder<Finite<N>>,
+{
+    type Output = Self;
 
-    let mut result = MultivariateDivisionWithRemainder::new(f.clone(), fs.to_vec());
-
-    let mut r = MultivariatePolynomial::<F>::zero();
-    let mut p = f.clone();
-    let mut q = fs
-        .iter()
-        .map(|_| MultivariatePolynomial::<F>::zero())
-        .collect_vec();
-
-    // eprintln!("{:?}", p.normalized());
-
-    result.add_row(p.clone(), q.to_vec(), r.clone());
-
-    while !p.is_zero() {
-        let lt_p = p.leading_term(ord);
-
-        let mut found = false;
-        for (i, fi) in fs.iter().enumerate() {
-            let lt_f = fi.leading_term(ord);
-
-            if let Some(ratio) = lt_p.div(&lt_f) {
-                found = true;
-
-                // eprintln!("RATIO! {ratio:?}");
-
-                let ratio: MultivariatePolynomial<_> = ratio.into();
-
-                q[i] = q[i].clone() + ratio.clone();
-
-                // eprintln!(
-                //     "subtracting ({ratio:?})*({fi:?}) = {:?}",
-                //     ratio.clone() * fi.clone()
-                // );
-                p = p.clone() - ratio * fi.clone();
-
-                break;
-            }
-        }
-
-        if !found {
-            r = r + lt_p.clone().into();
-            p = p - lt_p.into();
-        }
-
-        p = p.normalized();
-
-        result.add_row(p.clone(), q.to_vec(), r.clone());
+    fn mul(self, rhs: Finite<N>) -> Self::Output {
+        self * MultivariatePolynomial::constant(None, rhs)
     }
+}
+impl<O> std::ops::Mul<Rational> for MultivariatePolynomial<Rational, O>
+where
+    O: MonomialOrder<Rational>,
+{
+    type Output = Self;
 
-    // eprintln!("{}", result.ascii_table(ord));
+    fn mul(self, rhs: Rational) -> Self::Output {
+        self * MultivariatePolynomial::constant(None, rhs)
+    }
+}
+impl<O> std::ops::Mul<Integer> for MultivariatePolynomial<Integer, O>
+where
+    O: MonomialOrder<Integer>,
+{
+    type Output = Self;
 
-    result
+    fn mul(self, rhs: Integer) -> Self::Output {
+        self * MultivariatePolynomial::constant(None, rhs)
+    }
+}
+impl<O> std::ops::Mul<Real> for MultivariatePolynomial<Real, O>
+where
+    O: MonomialOrder<Real>,
+{
+    type Output = Self;
+
+    fn mul(self, rhs: Real) -> Self::Output {
+        self * MultivariatePolynomial::constant(None, rhs)
+    }
 }

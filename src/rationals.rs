@@ -5,6 +5,10 @@ use crate::{
     Group, Integer, Natural, Ring,
 };
 
+pub fn rational(f: f64) -> Rational {
+    Rational::approximate(f)
+}
+
 #[derive(Clone, Copy, Eq, PartialOrd)]
 pub struct Rational {
     pub num: Integer,
