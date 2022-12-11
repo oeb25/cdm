@@ -1,3 +1,4 @@
+pub mod ch03;
 pub mod ch05;
 pub mod ch08;
 pub mod ch09;
@@ -104,4 +105,12 @@ pub fn mpoly_rat<const N: usize, O: MonomialOrder<Rational>>(
         .collect();
 
     MultivariatePolynomial::new(ord, terms)
+}
+
+pub fn init_tracing() {
+    tracing_subscriber::fmt::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .without_time()
+        .with_filter_reloading()
+        .init();
 }

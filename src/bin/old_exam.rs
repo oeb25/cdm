@@ -1,17 +1,14 @@
 use cdm::{
     ch21::{buchbergers_algorithm, minimize_groebner_basis, multivariate_division_with_remainder},
     dft::{fft, PrimitiveRootOfUnity},
-    mono::{plex, MonomialOrder},
+    mono::{plex, MonomialOrder, PLex},
     multivariate_polynomials::MultivariatePolynomial,
     Finite, Monomial, Natural, Polynomial,
 };
 use tracing::{debug, info};
 
 fn main() {
-    tracing_subscriber::fmt::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .without_time()
-        .init();
+    cdm::init_tracing();
 
     q1();
     q2();
@@ -69,6 +66,11 @@ fn q3() {
             l: &Monomial<Finite<5>, Self>,
             r: &Monomial<Finite<5>, Self>,
         ) -> std::cmp::Ordering {
+            // let mut a_sum = 0;
+            // for i in 1..=3 {
+            //     a_sum += l.powers().get(i as usize).copied().unwrap_or(0) * i;
+            // }
+
             let a = l
                 .powers()
                 .iter()
@@ -79,10 +81,11 @@ fn q3() {
                 .powers()
                 .iter()
                 .enumerate()
-                .map(|(pow, n)| (pow as Natural + 1) * *n)
+                .map(|(pow, n)| (pow as Natural + 1, *n))
+                .map(|(pow, n)| pow * n)
                 .fold(0, |a, b| a + b);
 
-            b.cmp(&a).then_with(|| plex(None, l, r))
+            a.cmp(&b).then_with(|| plex(None, l, r))
         }
     }
 

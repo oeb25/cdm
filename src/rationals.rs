@@ -100,7 +100,7 @@ fn rational_signed_normalize() {
     }
     .normalized();
 
-    todo!("{:?}", minus_1 / minus_1);
+    assert_eq!(rational(1.), minus_1 / minus_1);
 }
 
 impl From<i128> for Rational {

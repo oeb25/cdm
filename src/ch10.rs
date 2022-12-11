@@ -98,6 +98,11 @@ pub fn fast_interpolation<F: Field>(us: &[F], vs: &[F]) -> Polynomial<F> {
 
     // 1.
     let matrix = building_up_the_subproduct_tree(us);
+    // let mut table = comfy_table::Table::new();
+    // for r in &matrix {
+    //     table.add_row(r.iter().map(|v| format!("{v:?}")));
+    // }
+    // println!("{table}");
 
     // 2.
     let m = matrix[k][0].clone();

@@ -1,8 +1,8 @@
 use cdm::{
+    ch03::extended_euclidean_algorithm,
     ch08,
     ch21::{buchbergers_algorithm, minimize_groebner_basis, multivariate_division_with_remainder},
     dft::PrimitiveRootOfUnity,
-    euclidean_domain::ExtendedEuclideanAlgorithm,
     gaussian_integers::Gaussian,
     latex::ToLatex,
     mono::PLex,
@@ -13,10 +13,7 @@ use cdm::{
 use itertools::Itertools;
 
 fn main() {
-    tracing_subscriber::fmt::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .without_time()
-        .init();
+    cdm::init_tracing();
 
     // test_exam();
     // let m = [5, 7];
@@ -78,7 +75,7 @@ fn test_exam() {
         let f = Gaussian::new(7, 8).map(Integer::from);
         let g = Gaussian::new(2, 3).map(Integer::from);
 
-        let result = ExtendedEuclideanAlgorithm::perform(&f, &g);
+        let result = extended_euclidean_algorithm(&f, &g);
         println!("{result:#?}");
 
         dbg!(result.gcd());

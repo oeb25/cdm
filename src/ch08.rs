@@ -15,6 +15,15 @@ pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
     f: Polynomial<R>,
     g: Polynomial<R>,
 ) -> Polynomial<R> {
+    let scope = tracing::span!(
+        tracing::Level::DEBUG,
+        "(8.1) Karatsuba",
+        k = format!("{k:?}"),
+        f = format!("{f:?}"),
+        g = format!("{g:?}"),
+    );
+    let _enter = scope.enter();
+
     let n = 2u128.pow(k as _);
     assert!(f.deg() < n && g.deg() < n);
     if n == 1 {
@@ -46,11 +55,24 @@ pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
             .collect(),
     );
 
+    // debug!("f0 = {f0:?}");
+    // debug!("f1 = {f1:?}");
+    // debug!("g0 = {g0:?}");
+    // debug!("g1 = {g1:?}");
+
     let fg0 = karatsubas_polynomial_multiplication_algorithm(k - 1, f0.clone(), g0.clone());
     let fg1 = karatsubas_polynomial_multiplication_algorithm(k - 1, f1.clone(), g1.clone());
     let mixed = karatsubas_polynomial_multiplication_algorithm(k - 1, f0 + f1, g0 + g1);
 
-    fg1.times_x(n) + (mixed - fg0.clone() - fg1).times_x(n / 2) + fg0
+    debug!("fg0 = {fg0:?}");
+    debug!("fg1 = {fg1:?}");
+    debug!("mixed = {mixed:?}");
+
+    let res = fg1.times_x(n) + (mixed - fg0.clone() - fg1).times_x(n / 2) + fg0;
+
+    debug!("result = {res:?}");
+
+    res
 }
 
 /// Algorithm 8.14 Fast Fourier Transform (FFT)

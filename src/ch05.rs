@@ -1,6 +1,8 @@
 //! # Modular algorithms and interpolation
 
-use crate::euclidean_domain::{eea, EuclideanDomain};
+use tracing::debug;
+
+use crate::{ch03::extended_euclidean_algorithm, euclidean_domain::EuclideanDomain};
 
 /// Algorithm 5.4 Chinese Remainder Algorithm (CRA).
 pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v: &[R]) -> R {
@@ -14,10 +16,14 @@ pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v:
 
     let mut c = vec![];
     let m = ms.iter().cloned().reduce(|m0, m1| m0 * m1).unwrap();
-    for (mi, vi) in ms.iter().zip(v) {
-        let res = eea(&(m.clone() / mi.clone()), &mi);
+    debug!("m = {m:?}");
+    for (i, (mi, vi)) in ms.iter().zip(v).enumerate() {
+        let res = extended_euclidean_algorithm(&(m.clone() / mi.clone()), &mi);
+        debug!("EEA on {:?} and {:?}", m.clone() / mi.clone(), mi);
         println!("{}, {:?}", res, &res.s[res.s.len() - 2]);
-        c.push((vi.clone() * res.s[res.s.len() - 2].clone()) % mi.clone());
+        let ci = (vi.clone() * res.s[res.s.len() - 2].clone()) % mi.clone();
+        debug!("c{i} = {ci:?}");
+        c.push(ci);
     }
 
     let mut res = c
@@ -27,6 +33,7 @@ pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v:
         .reduce(|a, b| a + b)
         .unwrap()
         % m.clone();
+    debug!("The result was {res:?}, but now find the smallest positive integer mod {m:?}");
     while res < R::zero() {
         res = (res + m.clone()) % m.clone();
     }

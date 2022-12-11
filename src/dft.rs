@@ -124,8 +124,24 @@ pub fn fft<R: Ring + std::fmt::Debug>(
             .collect_vec();
         let r1 = Polynomial::new(r1);
 
-        debug!("r0 = {r0:?}");
-        debug!("r1 = {r1:?}");
+        debug!(
+            "r0 = {:?} = {r0:?}",
+            f.iter()
+                .take(n_div_2 as _)
+                .map(|(c, pow)| format!("({c:?} + {:?})*x^{pow}", f.coef_at(n_div_2 + pow)))
+                .collect_vec()
+        );
+        debug!(
+            "r1 = {:?} = {r1:?}",
+            f.iter()
+                .take(n_div_2 as _)
+                .map(|(c, pow)| format!(
+                    "({c:?} - {:?})*{:?}*x^{pow}",
+                    f.coef_at(n_div_2 + pow),
+                    omega.pow(pow)
+                ))
+                .collect_vec()
+        );
 
         let omega_sq =
             PrimitiveRootOfUnity::new(omega.n() / 2, omega.clone().inner() * omega.inner())

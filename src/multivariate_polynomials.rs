@@ -65,14 +65,15 @@ where
         })
     }
     pub fn new(ord: O, mut terms: Vec<Monomial<F, O>>) -> Self {
-        terms.sort_by(|l, r| ord.ord(l, r));
+        terms.sort_by(|l, r| ord.ord(r, l));
 
-        let terms = terms
+        let mut terms = terms
             .into_iter()
             .group_by(|t| t.without_coef())
             .into_iter()
             .map(|(a, b)| a * b.map(|t| t.coef().clone()).reduce(|a, b| a + b).unwrap())
-            .collect();
+            .collect_vec();
+        terms.sort_by(|l, r| ord.ord(r, l));
 
         MultivariatePolynomial::Terms { ord, terms }
     }
@@ -101,7 +102,7 @@ where
     }
     pub fn leading_term(&self) -> Monomial<F, O> {
         self.terms()
-            .min_by(|l, r| self.ord().unwrap().ord(l, r))
+            .max_by(|l, r| self.ord().unwrap().ord(l, r))
             .unwrap_or_else(|| Monomial::zero(self.ord().cloned()))
     }
     pub fn leading_coef(&self) -> F {

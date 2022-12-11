@@ -12,7 +12,7 @@ use crate::{
 pub struct Polynomial<F> {
     /// The coefficients of the polynomial with the first entry being the
     /// constant term, that is:
-    /// ```
+    /// ```ignore
     /// ax^2 + bx + c == [c, b, a]
     /// ```
     coefficients: Vec<F>,
@@ -265,11 +265,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{euclidean_domain::ExtendedEuclideanAlgorithm, Group, Polynomial, Rational};
+    use crate::{ch03::ExtendedEuclideanAlgorithm, Group, Polynomial, Rational};
     use proptest::prelude::*;
 
     prop_compose! {
-        fn polynomial()(deg in 0..10usize)(cs in prop::collection::vec(0..10i128, deg))
+        fn polynomial()(deg in 0..5usize)(cs in prop::collection::vec(0..10i128, deg))
             -> Polynomial<Rational>
         {
             Polynomial::new(cs.into_iter().map(Rational::from).collect())
@@ -410,7 +410,11 @@ where
     type Output = Self;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        self.div_rem(&rhs).unwrap().1.normalized()
+        if self.deg() < rhs.deg() {
+            self
+        } else {
+            self.div_rem(&rhs).unwrap().1.normalized()
+        }
     }
 }
 impl<F> std::ops::Div for Polynomial<F>
