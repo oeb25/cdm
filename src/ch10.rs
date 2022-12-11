@@ -1,4 +1,4 @@
-//! Fast polynomial evaluation and interpolation
+//! # Fast polynomial evaluation and interpolation
 
 use itertools::Itertools;
 use tracing::debug;

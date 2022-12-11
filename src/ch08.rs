@@ -1,3 +1,5 @@
+//! # Fast multiplication
+
 use itertools::Itertools;
 use tracing::debug;
 
@@ -6,6 +8,7 @@ use crate::{
     euclidean_domain::EuclideanDomain,
     Natural, Polynomial, Ring,
 };
+
 /// Algorithm 8.1 Karatsuba’s polynomial multiplication algorithm
 pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
     k: Natural,

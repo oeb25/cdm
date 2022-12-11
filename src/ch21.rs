@@ -1,1 +1,1 @@
-//! Gröbner bases
+//! # Gröbner bases

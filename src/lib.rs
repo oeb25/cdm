@@ -16,7 +16,6 @@ pub mod identity;
 pub mod integers;
 pub mod latex;
 pub mod mono;
-pub mod multi_eval;
 pub mod multivariate_polynomials;
 pub mod naturals;
 pub mod newton_interpolation;

@@ -1,8 +1,8 @@
-//! Modular algorithms and interpolation
+//! # Modular algorithms and interpolation
 
 use crate::euclidean_domain::{eea, EuclideanDomain};
 
-/// ALGORITHM 5.4 Chinese Remainder Algorithm (CRA).
+/// Algorithm 5.4 Chinese Remainder Algorithm (CRA).
 pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v: &[R]) -> R {
     let scope = tracing::span!(
         tracing::Level::DEBUG,
