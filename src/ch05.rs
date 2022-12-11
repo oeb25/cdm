@@ -4,6 +4,14 @@ use crate::euclidean_domain::{eea, EuclideanDomain};
 
 /// ALGORITHM 5.4 Chinese Remainder Algorithm (CRA).
 pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v: &[R]) -> R {
+    let scope = tracing::span!(
+        tracing::Level::DEBUG,
+        "(5.4) CRA",
+        ms = format!("{ms:?}"),
+        v = format!("{v:?}"),
+    );
+    let _enter = scope.enter();
+
     let mut c = vec![];
     let m = ms.iter().cloned().reduce(|m0, m1| m0 * m1).unwrap();
     for (mi, vi) in ms.iter().zip(v) {

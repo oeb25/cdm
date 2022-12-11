@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use tracing::debug;
 
 use crate::{
     dft::{self, PrimitiveRootOfUnity},
@@ -44,7 +45,7 @@ pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
 
     let fg0 = karatsubas_polynomial_multiplication_algorithm(k - 1, f0.clone(), g0.clone());
     let fg1 = karatsubas_polynomial_multiplication_algorithm(k - 1, f1.clone(), g1.clone());
-    let mixed = karatsubas_polynomial_multiplication_algorithm(k - 1, (f0 + f1), (g0 + g1));
+    let mixed = karatsubas_polynomial_multiplication_algorithm(k - 1, f0 + f1, g0 + g1);
 
     fg1.times_x(n) + (mixed - fg0.clone() - fg1).times_x(n / 2) + fg0
 }
@@ -59,18 +60,27 @@ pub fn fast_convolution<R: Ring>(
     g: Polynomial<R>,
     omega: PrimitiveRootOfUnity<R>,
 ) -> Polynomial<R> {
+    let scope = tracing::span!(
+        tracing::Level::DEBUG,
+        "(8.16) Fast convolution",
+        f = format!("{f:?}"),
+        g = format!("{g:?}"),
+        omega = format!("{:?}", omega.clone().inner()),
+    );
+    let _enter = scope.enter();
+
     assert_eq!(2u128.pow(k as _), omega.n());
 
     let alpha = dft::fft(k, f, omega.clone());
     let beta = dft::fft(k, g, omega.clone());
-    eprintln!("alpha = {alpha:?}");
-    eprintln!("beta = {beta:?}");
+    debug!("alpha = {alpha:?}");
+    debug!("beta = {beta:?}");
     let gamma = alpha
         .into_iter()
         .zip(beta)
         .map(|(l, r)| l * r)
         .collect_vec();
-    eprintln!("gamma = {gamma:?}");
+    debug!("gamma = {gamma:?}");
 
     let n_in_r = (0..omega.n() as _)
         .map(|_| R::one())
@@ -81,4 +91,9 @@ pub fn fast_convolution<R: Ring>(
         Polynomial::new(gamma),
         PrimitiveRootOfUnity::new(omega.n(), omega.inverse()).unwrap(),
     )) * Polynomial::new(vec![n_in_r.multiplicative_inverse().unwrap()])
+}
+
+/// Algorithm 8.20 Fast negative wrapped convolution
+pub fn fast_negative_wrapped_convolution() {
+    unimplemented!()
 }

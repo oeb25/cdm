@@ -1,5 +1,5 @@
 use cdm::{
-    ch05, ch08,
+    ch08,
     dft::PrimitiveRootOfUnity,
     euclidean_domain::ExtendedEuclideanAlgorithm,
     gaussian_integers::Gaussian,
@@ -24,11 +24,23 @@ fn main() {
     // let res = ch05::chinese_remainder_algorithm(&m, &v);
     // println!("{:?}", res);
 
-    let res = cdm::ch09::inversion_newton_iteration(
-        Polynomial::<Finite<7>>::new([1, 2, 3i128].map(Finite::from).to_vec()),
-        4,
-    );
-    println!("{res:?}");
+    // let res = cdm::ch09::inversion_newton_iteration(
+    //     Polynomial::<Finite<7>>::new([1, 2, 3i128].map(Finite::from).to_vec()),
+    //     4,
+    // );
+    // println!("{res:?}");
+
+    // let res = cdm::ch09::fast_division_with_remainder(
+    //     Polynomial::new([-4, 3, -5, 1i128].to_vec()),
+    //     Polynomial::new([-3, 1].to_vec()),
+    // );
+    // println!("{res:?}");
+
+    let us = [0, 1, 2, 3].map(Rational::from);
+    let vs = [1, 2, 4, 8].map(Rational::from);
+    let result = cdm::ch10::fast_interpolation(&us, &vs);
+
+    eprintln!("{result:?}");
 }
 
 fn exercise_8_10() {

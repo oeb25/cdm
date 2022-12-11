@@ -112,6 +112,15 @@ where
         }
     }
 
+    pub fn rem_pow(&self, deg: Natural) -> Self
+    where
+        F: Clone + std::fmt::Debug,
+    {
+        let mut cs = self.coefficients.clone();
+        cs.truncate(deg as usize);
+        Self::new(cs)
+    }
+
     pub fn div_rem(&self, rhs: &Self) -> Option<(Self, Self)>
     where
         Self: std::fmt::Debug,
@@ -218,6 +227,22 @@ where
                 coefficients: self.coefficients[at..].to_vec(),
             },
         )
+    }
+
+    pub fn rev(&self, deg: Natural) -> Self
+    where
+        F: Ring,
+    {
+        assert!(self.deg() <= deg);
+        let mut coefs = self
+            .iter()
+            .map(|(c, _)| c.clone())
+            .chain(std::iter::repeat(F::zero()))
+            .take((deg + 1) as _)
+            .collect_vec();
+        coefs.reverse();
+
+        Self::new(coefs)
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&F, Natural)> {

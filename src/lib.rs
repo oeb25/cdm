@@ -1,6 +1,8 @@
 pub mod ch05;
 pub mod ch08;
 pub mod ch09;
+pub mod ch10;
+pub mod ch21;
 pub mod count_ops;
 pub mod dft;
 pub mod domain;

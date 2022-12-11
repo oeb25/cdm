@@ -90,6 +90,7 @@ where
     }
 }
 
+/// Algorithm 8.14 Fast Fourier Transform (FFT)
 pub fn fft<R: Ring + std::fmt::Debug>(
     k: Natural,
     f: Polynomial<R>,
