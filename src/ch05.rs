@@ -1,12 +1,15 @@
+//! Modular algorithms and interpolation
+
 use crate::euclidean_domain::{eea, EuclideanDomain};
 
+/// ALGORITHM 5.4 Chinese Remainder Algorithm (CRA).
 pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v: &[R]) -> R {
     let mut c = vec![];
     let m = ms.iter().cloned().reduce(|m0, m1| m0 * m1).unwrap();
-    for i in 0..ms.len() {
-        let res = eea(&(m.clone() / ms[i].clone()), &ms[i]);
+    for (mi, vi) in ms.iter().zip(v) {
+        let res = eea(&(m.clone() / mi.clone()), &mi);
         println!("{}, {:?}", res, &res.s[res.s.len() - 2]);
-        c.push((v[i].clone() * res.s[res.s.len() - 2].clone()) % ms[i].clone());
+        c.push((vi.clone() * res.s[res.s.len() - 2].clone()) % mi.clone());
     }
 
     let mut res = c

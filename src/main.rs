@@ -1,6 +1,5 @@
 use cdm::{
-    ch08,
-    cra::{self},
+    ch05, ch08,
     dft::PrimitiveRootOfUnity,
     euclidean_domain::ExtendedEuclideanAlgorithm,
     gaussian_integers::Gaussian,
@@ -14,11 +13,22 @@ use cdm::{
 use itertools::Itertools;
 
 fn main() {
+    tracing_subscriber::fmt::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .without_time()
+        .init();
+
     // test_exam();
-    let m = [5, 7];
-    let v = [1, 3];
-    let res = cra::chinese_remainder_algorithm(&m, &v);
-    println!("{:?}", res);
+    // let m = [5, 7];
+    // let v = [1, 3];
+    // let res = ch05::chinese_remainder_algorithm(&m, &v);
+    // println!("{:?}", res);
+
+    let res = cdm::ch09::inversion_newton_iteration(
+        Polynomial::<Finite<7>>::new([1, 2, 3i128].map(Finite::from).to_vec()),
+        4,
+    );
+    println!("{res:?}");
 }
 
 fn exercise_8_10() {

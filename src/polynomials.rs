@@ -92,6 +92,12 @@ where
             .unwrap_or(0);
         Natural::from(deg as u128)
     }
+    pub fn is_monic(&self) -> bool
+    where
+        F: Identity<Multiplication> + Clone,
+    {
+        Identity::<Multiplication>::is_identity(&self.coef_at(self.deg()))
+    }
 
     pub fn scale(&self, s: &F) -> Self
     where

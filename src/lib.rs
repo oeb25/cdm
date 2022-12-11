@@ -1,6 +1,7 @@
+pub mod ch05;
 pub mod ch08;
+pub mod ch09;
 pub mod count_ops;
-pub mod cra;
 pub mod dft;
 pub mod domain;
 pub mod euclidean_domain;
@@ -32,16 +33,7 @@ pub use rationals::Rational;
 pub use reals::Real;
 pub use ring::Ring;
 
-use itertools::Itertools;
-
-use crate::{
-    dft::PrimitiveRootOfUnity,
-    euclidean_domain::ExtendedEuclideanAlgorithm,
-    gaussian_integers::Gaussian,
-    latex::ToLatex,
-    mono::{MonomialOrder, PLex},
-    multivariate_polynomials::{multivariate_division_with_remainder, MultivariatePolynomial},
-};
+use crate::multivariate_polynomials::MultivariatePolynomial;
 
 pub const fn digits_superscript(c: char) -> Option<char> {
     Some(match c {
