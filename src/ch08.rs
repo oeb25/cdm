@@ -50,14 +50,7 @@ pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
 }
 
 /// Algorithm 8.14 Fast Fourier Transform (FFT)
-
-pub fn fast_fourier_transform<R: Ring>(
-    k: Natural,
-    f: Polynomial<R>,
-    omega: PrimitiveRootOfUnity<R>,
-) -> Vec<R> {
-    dft::fft(k, f, omega)
-}
+pub use dft::fft as fast_fourier_transform;
 
 /// Algorithm 8.16 Fast convolution
 pub fn fast_convolution<R: Ring>(

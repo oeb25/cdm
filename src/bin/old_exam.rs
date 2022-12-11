@@ -1,6 +1,9 @@
 use cdm::{
     dft::{fft, PrimitiveRootOfUnity},
+    groebner,
     mono::{MonomialOrder, PLex},
+    mpoly,
+    multivariate_polynomials::{self, MultivariatePolynomial},
     Finite, Monomial, Natural, Polynomial,
 };
 use tracing::{debug, info};
@@ -18,7 +21,7 @@ fn main() {
 
 fn question_1() {
     type R = Finite<5>;
-    let n = 4;
+    let n = 4u128;
 
     // (a)
     let omega = PrimitiveRootOfUnity::new(n, R::from(2i128)).unwrap();
@@ -28,7 +31,7 @@ fn question_1() {
     let f = Polynomial::new([1, 1, 0, 1u128].map(R::from).to_vec());
     info!("f = {f:?}");
 
-    let fft_f = fft((u128::from(n).ilog2() as u128).into(), f, omega);
+    let fft_f = fft(n.ilog2() as u128, f, omega);
     info!("fft(f) = {fft_f:?}");
 }
 
@@ -57,13 +60,13 @@ fn question_3() {
                 .powers()
                 .iter()
                 .enumerate()
-                .map(|(pow, n)| Natural::from(pow as u128 + 1) * *n)
+                .map(|(pow, n)| (pow as Natural + 1) * *n)
                 .fold(0, |a, b| a + b);
             let b = r
                 .powers()
                 .iter()
                 .enumerate()
-                .map(|(pow, n)| Natural::from(pow as u128 + 1) * *n)
+                .map(|(pow, n)| (pow as Natural + 1) * *n)
                 .fold(0, |a, b| a + b);
 
             b.cmp(&a).then_with(|| PLex::default().ord(l, r))
@@ -71,4 +74,29 @@ fn question_3() {
     }
 
     // (a)
+
+    // (b)
+
+    type F = Finite<5>;
+
+    let g1 = mpoly::<F, 2>([(1i128, &[3]), (-1i128, &[0, 0, 1])]);
+    let g2 = mpoly::<F, 2>([(-1i128, &[1]), (1i128, &[0, 1])]);
+
+    debug!("g1 = {g1:?}");
+    debug!("g2 = {g2:?}");
+
+    info!("lt(g1) = {:?}", g1.leading_term(&CustomOrdering));
+    info!("lt(g2) = {:?}", g2.leading_term(&CustomOrdering));
+
+    // (c)
+
+    let res = multivariate_polynomials::multivariate_division_with_remainder(
+        &CustomOrdering,
+        &g1.s_polynomial(&g2, &CustomOrdering),
+        &[g1, g2],
+    );
+
+    println!("{}", res.ascii_table(&CustomOrdering));
 }
+
+fn question_4() {}

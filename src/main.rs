@@ -7,6 +7,7 @@ use cdm::{
     groebner,
     latex::ToLatex,
     mono::{MonomialOrder, PLex},
+    mpoly, mpoly_rat,
     multivariate_polynomials::{multivariate_division_with_remainder, MultivariatePolynomial},
     Finite, Integer, Monomial, Natural, Polynomial, Rational, Ring,
 };
@@ -213,23 +214,4 @@ fn home_work2() {
     }
 
     eprintln!("{}", gs.iter().map(|g| g.to_latex()).format("\n"));
-}
-
-fn mpoly<F: Ring, const N: usize>(
-    terms: [(impl Into<F>, &[u128]); N],
-) -> MultivariatePolynomial<F> {
-    let terms = terms
-        .into_iter()
-        .map(|(c, ps)| Monomial::new(c.into(), ps.to_vec()))
-        .collect();
-
-    MultivariatePolynomial { terms }
-}
-fn mpoly_rat<const N: usize>(terms: [(f64, &[u128]); N]) -> MultivariatePolynomial<Rational> {
-    let terms = terms
-        .into_iter()
-        .map(|(c, ps)| Monomial::new(Rational::approximate(c), ps.to_vec()))
-        .collect();
-
-    MultivariatePolynomial { terms }
 }

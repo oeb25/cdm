@@ -89,3 +89,22 @@ pub fn num_to_superscript(n: i128) -> String {
 pub fn num_to_subscript(n: i128) -> String {
     n.to_string().chars().flat_map(digits_subscript).collect()
 }
+
+pub fn mpoly<F: Ring, const N: usize>(
+    terms: [(impl Into<F>, &[u128]); N],
+) -> MultivariatePolynomial<F> {
+    let terms = terms
+        .into_iter()
+        .map(|(c, ps)| Monomial::new(c.into(), ps.to_vec()))
+        .collect();
+
+    MultivariatePolynomial { terms }
+}
+pub fn mpoly_rat<const N: usize>(terms: [(f64, &[u128]); N]) -> MultivariatePolynomial<Rational> {
+    let terms = terms
+        .into_iter()
+        .map(|(c, ps)| Monomial::new(Rational::approximate(c), ps.to_vec()))
+        .collect();
+
+    MultivariatePolynomial { terms }
+}

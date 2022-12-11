@@ -341,7 +341,16 @@ impl<F: Field + std::fmt::Debug> MultivariateDivisionWithRemainder<F> {
     }
 
     pub fn ascii_table(&self, ord: &impl MonomialOrder<F>) -> comfy_table::Table {
-        let mut table = comfy_table::Table::new();
+        use comfy_table::{
+            modifiers::UTF8_ROUND_CORNERS, presets::UTF8_FULL, ContentArrangement, Table,
+        };
+
+        let mut table = Table::new();
+        table
+            .load_preset(UTF8_FULL)
+            .apply_modifier(UTF8_ROUND_CORNERS)
+            .set_content_arrangement(ContentArrangement::Dynamic);
+
         table.set_header(
             std::iter::once("p".to_string())
                 // .chain(fs.iter().enumerate().map(|(i, _)| format!("q{i}")))
@@ -375,6 +384,14 @@ pub fn multivariate_division_with_remainder<F: Field + std::fmt::Debug>(
     f: &MultivariatePolynomial<F>,
     fs: &[MultivariatePolynomial<F>],
 ) -> MultivariateDivisionWithRemainder<F> {
+    let span = tracing::span!(
+        tracing::Level::DEBUG,
+        "MVDWR",
+        f = format!("{:?}", f),
+        fs = format!("{:?}", fs)
+    );
+    let _enter = span.enter();
+
     let mut result = MultivariateDivisionWithRemainder::new(f.clone(), fs.to_vec());
 
     let mut r = MultivariatePolynomial::<F>::zero();
