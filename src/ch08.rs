@@ -2,8 +2,62 @@ use itertools::Itertools;
 
 use crate::{
     dft::{self, PrimitiveRootOfUnity},
+    euclidean_domain::EuclideanDomain,
     Natural, Polynomial, Ring,
 };
+/// Algorithm 8.1 Karatsuba’s polynomial multiplication algorithm
+pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
+    k: Natural,
+    f: Polynomial<R>,
+    g: Polynomial<R>,
+) -> Polynomial<R> {
+    let n = 2u128.pow(k as _);
+    assert!(f.deg() < n && g.deg() < n);
+    if n == 1 {
+        return f * g;
+    }
+    let f1 = Polynomial::new(
+        f.iter()
+            .skip(n as usize / 2)
+            .map(|(c, _)| c.clone())
+            .collect(),
+    );
+    let f0 = Polynomial::new(
+        f.iter()
+            .take(n as usize / 2)
+            .map(|(c, _)| c.clone())
+            .collect(),
+    );
+
+    let g1 = Polynomial::new(
+        g.iter()
+            .skip(n as usize / 2)
+            .map(|(c, _)| c.clone())
+            .collect(),
+    );
+    let g0 = Polynomial::new(
+        g.iter()
+            .take(n as usize / 2)
+            .map(|(c, _)| c.clone())
+            .collect(),
+    );
+
+    let fg0 = karatsubas_polynomial_multiplication_algorithm(k - 1, f0.clone(), g0.clone());
+    let fg1 = karatsubas_polynomial_multiplication_algorithm(k - 1, f1.clone(), g1.clone());
+    let mixed = karatsubas_polynomial_multiplication_algorithm(k - 1, (f0 + f1), (g0 + g1));
+
+    fg1.times_x(n) + (mixed - fg0.clone() - fg1).times_x(n / 2) + fg0
+}
+
+/// Algorithm 8.14 Fast Fourier Transform (FFT)
+
+pub fn fast_fourier_transform<R: Ring>(
+    k: Natural,
+    f: Polynomial<R>,
+    omega: PrimitiveRootOfUnity<R>,
+) -> Vec<R> {
+    dft::fft(k, f, omega)
+}
 
 /// Algorithm 8.16 Fast convolution
 pub fn fast_convolution<R: Ring>(

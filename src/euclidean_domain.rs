@@ -56,6 +56,13 @@ impl<D: std::fmt::Debug> std::fmt::Display for ExtendedEuclideanAlgorithm<D> {
     }
 }
 
+pub fn eea<D: EuclideanDomain + PartialEq + std::fmt::Debug>(
+    f: &D,
+    g: &D,
+) -> ExtendedEuclideanAlgorithm<D> {
+    ExtendedEuclideanAlgorithm::perform(f, g)
+}
+
 impl<D: EuclideanDomain + PartialEq + std::fmt::Debug> ExtendedEuclideanAlgorithm<D> {
     pub fn perform(f: &D, g: &D) -> Self {
         let mut r = vec![f.clone(), g.clone()];

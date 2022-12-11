@@ -1,5 +1,6 @@
 pub mod ch08;
 pub mod count_ops;
+pub mod cra;
 pub mod dft;
 pub mod domain;
 pub mod euclidean_domain;

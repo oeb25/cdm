@@ -1,5 +1,6 @@
 use cdm::{
     ch08,
+    cra::{self},
     dft::PrimitiveRootOfUnity,
     euclidean_domain::ExtendedEuclideanAlgorithm,
     gaussian_integers::Gaussian,
@@ -12,7 +13,11 @@ use cdm::{
 use itertools::Itertools;
 
 fn main() {
-    old_exam();
+    // test_exam();
+    let m = [5, 7];
+    let v = [1, 3];
+    let res = cra::chinese_remainder_algorithm(&m, &v);
+    println!("{:?}", res);
 }
 
 fn exercise_8_10() {
