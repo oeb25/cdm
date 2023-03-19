@@ -92,11 +92,10 @@ where
         }
     }
     pub fn ord(&self) -> Option<&O> {
-        match self {
-            Self::Constant(_) => None,
-            Self::Terms { ord, .. } => Some(ord),
-        }
+        let Self::Terms { ord, ..} = self else { return None };
+        ord.into()
     }
+
     pub fn leading_term(&self) -> Monomial<F, O> {
         self.terms()
             .max_by(|l, r| self.ord().unwrap().ord(l, r))
