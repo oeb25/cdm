@@ -1,4 +1,4 @@
-use crate::identity::{Addition, Identity};
+use crate::prelude::*;
 
 pub trait Group:
     std::ops::Add<Self, Output = Self>

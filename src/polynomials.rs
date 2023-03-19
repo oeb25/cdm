@@ -1,12 +1,6 @@
 use itertools::Itertools;
 
-use crate::{
-    euclidean_domain::EuclideanDomain,
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Natural, Ring,
-};
+use crate::prelude::*;
 
 /// The coefficients of the polynomial with the first entry being the
 /// constant term, that is:

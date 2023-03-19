@@ -1,9 +1,4 @@
-use crate::{
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Integer, Natural, Ring,
-};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Finite<const N: Natural>(Natural);

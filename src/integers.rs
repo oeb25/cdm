@@ -1,10 +1,4 @@
-use crate::{
-    domain::Domain,
-    euclidean_domain::EuclideanDomain,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Natural, Ring,
-};
+use crate::prelude::*;
 
 pub type Integer = i128;
 

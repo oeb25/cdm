@@ -3,13 +3,10 @@ use std::cmp::Ordering;
 use itertools::Itertools;
 
 use crate::{
-    field::Field,
-    identity::{Addition, Identity, Multiplication},
-    multivariate_polynomials::MultivariatePolynomial,
-    num_to_superscript,
-    rationals::rational,
-    Group, Natural, Rational, Ring,
+    multivariate_polynomials::MultivariatePolynomial, num_to_superscript, rationals::rational,
 };
+
+use crate::prelude::*;
 
 pub trait MonomialOrder<F>: Clone + std::fmt::Debug {
     fn ord(&self, l: &Monomial<F, Self>, r: &Monomial<F, Self>) -> Ordering;

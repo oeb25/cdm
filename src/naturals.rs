@@ -1,4 +1,4 @@
-use crate::identity::{Addition, Identity, Multiplication};
+use crate::prelude::*;
 
 pub type Natural = u128;
 

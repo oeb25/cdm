@@ -1,13 +1,7 @@
 use either::Either;
 use itertools::Itertools;
 
-use crate::{
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    mono::{Monomial, MonomialOrder},
-    Finite, Group, Integer, Natural, Rational, Real, Ring,
-};
+use crate::prelude::*;
 
 #[derive(Clone)]
 pub enum MultivariatePolynomial<F, O: MonomialOrder<F>> {

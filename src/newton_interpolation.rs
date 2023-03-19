@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Debug, hash::Hash};
 
-use crate::{field::Field, polynomials::Polynomial, Group};
+use crate::prelude::*;
 
 pub struct NewtonInterpolation<'a, F: Field> {
     samples: &'a [(F, F)],

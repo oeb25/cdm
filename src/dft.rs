@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use tracing::debug;
 
-use crate::{Natural, Polynomial, Ring};
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PrimitiveRootOfUnity<R> {

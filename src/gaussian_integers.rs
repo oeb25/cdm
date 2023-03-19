@@ -1,12 +1,6 @@
 use derive_more::{Add, Div, From, Into, Mul, Neg, Rem, Sub};
 
-use crate::{
-    domain::Domain,
-    euclidean_domain::EuclideanDomain,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Integer, Natural, Ring,
-};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Add, Sub, Neg, From, Into)]
 // #[mul(forward)]

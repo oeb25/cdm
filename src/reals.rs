@@ -1,11 +1,6 @@
 use derive_more::{Add, Div, Mul, Neg, Sub};
 
-use crate::{
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Ring,
-};
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Add, Sub, Neg, Mul, Div)]
 #[mul(forward)]

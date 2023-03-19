@@ -1,9 +1,4 @@
-use crate::{
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Integer, Natural, Ring,
-};
+use crate::prelude::*;
 
 pub fn rational(f: f64) -> Rational {
     Rational::approximate(f)

@@ -1,4 +1,4 @@
-use crate::{polynomials::Polynomial, ring::Ring};
+use crate::prelude::*;
 
 /// A commutative rings without zero-divisors is called an integral domain (also just called a domain).
 pub trait Domain: Ring {}
