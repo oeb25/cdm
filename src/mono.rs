@@ -207,10 +207,8 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     }
 
     pub fn ord(&self) -> Option<&O> {
-        match self {
-            Self::Constant(_) => None,
-            Self::Mono { ord, .. } => Some(ord),
-        }
+        let Self::Mono { ord, .. } = self else { return None; };
+        ord.into()
     }
 
     pub fn constant(ord: Option<O>, coef: impl Into<F>) -> Self {
@@ -309,39 +307,38 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if Identity::<Addition>::is_identity(self.coef()) {
-            write!(f, "0")
+            return write!(f, "0");
         } else if Identity::<Multiplication>::is_identity(self.coef())
             && self.powers().iter().all(|p| *p == 0)
         {
-            write!(f, "1")
-        } else {
-            write!(
-                f,
-                "{}{}",
-                if Identity::<Multiplication>::is_identity(self.coef()) {
-                    "".to_string()
-                } else {
-                    format!("{:?}", self.coef())
-                },
-                self.powers()
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(idx, p)| {
-                        if *p == 0 {
-                            None
-                        } else if Identity::<Multiplication>::is_identity(p) {
-                            Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
-                        } else {
-                            Some(format!(
-                                "{}{}",
-                                ["x", "y", "z", "v", "w"][idx],
-                                num_to_superscript(*p as _)
-                            ))
-                        }
-                    })
-                    .format("")
-            )
+            return write!(f, "1");
         }
+        write!(
+            f,
+            "{}{}",
+            if Identity::<Multiplication>::is_identity(self.coef()) {
+                "".to_string()
+            } else {
+                format!("{:?}", self.coef())
+            },
+            self.powers()
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, p)| {
+                    if *p == 0 {
+                        None
+                    } else if Identity::<Multiplication>::is_identity(p) {
+                        Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
+                    } else {
+                        Some(format!(
+                            "{}{}",
+                            ["x", "y", "z", "v", "w"][idx],
+                            num_to_superscript(*p as _)
+                        ))
+                    }
+                })
+                .format("")
+        )
     }
 }
 
