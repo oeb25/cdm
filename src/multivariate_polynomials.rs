@@ -22,13 +22,10 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         use itertools::EitherOrBoth;
-        self.terms()
-            .zip_longest(other.terms())
-            .map(|ps| {
-                let EitherOrBoth::Both(l, r) = ps else { return false };
-                l == r
-            })
-            .all(|x| x)
+        self.terms().zip_longest(other.terms()).all(|ps| {
+            let EitherOrBoth::Both(l, r) = ps else { return false };
+            l == r
+        })
     }
 }
 

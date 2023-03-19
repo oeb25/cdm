@@ -166,16 +166,16 @@ where
     O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
+        use itertools::EitherOrBoth;
         self.coef() == other.coef()
             && self
                 .powers()
                 .iter()
                 .zip_longest(other.powers().iter())
-                .map(|ps| match ps {
-                    itertools::EitherOrBoth::Both(l, r) => l == r,
-                    itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => *p == 0,
+                .all(|ps| match ps {
+                    EitherOrBoth::Both(l, r) => l == r,
+                    EitherOrBoth::Left(p) | EitherOrBoth::Right(p) => *p == 0,
                 })
-                .all(|x| x)
     }
 }
 
@@ -233,13 +233,13 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
             Self::Mono { powers, .. } => powers,
         }
     }
-    pub fn without_coef(&self) -> Monomial<F, O>
+    pub fn without_coef(&self) -> Self
     where
         F: Identity<Multiplication>,
     {
         self.map_coef(|_| F::identity())
     }
-    pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Monomial<F, O> {
+    pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Self {
         match self {
             Self::Constant(coef) => Self::Constant(f(coef)),
             Self::Mono { ord, coef, powers } => Self::Mono {
@@ -261,21 +261,21 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
         F: Field + std::fmt::Debug,
     {
         // eprintln!("try div {self:?}/{rhs:?}");
-
+        use itertools::EitherOrBoth;
         let powers = self
             .powers()
             .iter()
             .zip_longest(rhs.powers())
             .map(|ps| match ps {
-                itertools::EitherOrBoth::Both(l, r) => {
+                EitherOrBoth::Both(l, r) => {
                     if l >= r {
                         Some(*l - *r)
                     } else {
                         None
                     }
                 }
-                itertools::EitherOrBoth::Left(l) => Some(*l),
-                itertools::EitherOrBoth::Right(r) => {
+                EitherOrBoth::Left(l) => Some(*l),
+                EitherOrBoth::Right(r) => {
                     if *r == 0 {
                         Some(0)
                     } else {
