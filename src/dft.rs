@@ -169,7 +169,7 @@ mod tests {
     fn simple_fft() {
         type R = Finite<5>;
 
-        let f: Polynomial<R> = Polynomial::new([1, 1, 0, 1u128].map(R::from).to_vec());
+        let f = Polynomial::new([1, 1, 0, 1u128].map(R::from).to_vec());
 
         eprintln!("{f:?}");
 

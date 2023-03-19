@@ -196,7 +196,8 @@ where
     where
         F: Clone,
     {
-        (Self(self.0[0..at].to_vec()), Self(self.0[at..].to_vec()))
+        let (left, right) = self.0.split_at(at);
+        (Self(left.into()), Self(right.into()))
     }
 
     pub fn rev(&self, deg: Natural) -> Self
@@ -366,10 +367,9 @@ where
 
     fn rem(self, rhs: Self) -> Self {
         if self.deg() < rhs.deg() {
-            self
-        } else {
-            self.div_rem(&rhs).unwrap().1.normalized()
+            return self;
         }
+        self.div_rem(&rhs).unwrap().1.normalized()
     }
 }
 impl<F> std::ops::Div for Polynomial<F>
