@@ -13,29 +13,41 @@ pub struct CountOps<F> {
 }
 impl<F> From<F> for CountOps<F> {
     fn from(value: F) -> Self {
-        CountOps { value }
+        Self { value }
     }
 }
 
 thread_local! {
-    static ADDITIONS: std::cell::Cell<u32> = Default::default();
-    static MULTIPLICATIONS: std::cell::Cell<u32> = Default::default();
+    static COUNTS:  std::cell::Cell<Counts> = Default::default();
 }
 
 pub fn reset() {
-    ADDITIONS.with(|it| it.set(0));
-    MULTIPLICATIONS.with(|it| it.set(0));
+    COUNTS.with(|x| x.set(Default::default()))
 }
-#[derive(Debug)]
+
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Counts {
-    pub additions: u32,
-    pub multiplications: u32,
+    pub add: u32,
+    pub mul: u32,
+}
+
+impl Counts {
+    fn inc_add(&self) -> Self {
+        Self {
+            add: self.add + 1,
+            mul: self.mul,
+        }
+    }
+
+    fn inc_mul(&self) -> Self {
+        Self {
+            add: self.add,
+            mul: self.mul + 1,
+        }
+    }
 }
 pub fn get_counts() -> Counts {
-    Counts {
-        additions: ADDITIONS.with(|it| it.get()),
-        multiplications: MULTIPLICATIONS.with(|it| it.get()),
-    }
+    COUNTS.with(|x| x.get())
 }
 
 impl<F> std::ops::Add for CountOps<F>
@@ -46,7 +58,7 @@ where
 
     fn add(self, rhs: Self) -> Self {
         // println!("addition");
-        ADDITIONS.with(|it| it.set(it.get() + 1));
+        COUNTS.with(|x| x.get().inc_add());
         Self {
             value: self.value + rhs.value,
         }
@@ -60,7 +72,7 @@ where
 
     fn sub(self, rhs: Self) -> Self {
         // println!("subtraction");
-        ADDITIONS.with(|it| it.set(it.get() + 1));
+        COUNTS.with(|x| x.get().inc_add());
         Self {
             value: self.value - rhs.value,
         }
@@ -74,7 +86,7 @@ where
 
     fn mul(self, rhs: Self) -> Self {
         // println!("multiplication");
-        MULTIPLICATIONS.with(|it| it.set(it.get() + 1));
+        COUNTS.with(|x| x.get().inc_mul());
         Self {
             value: self.value * rhs.value,
         }
@@ -88,7 +100,7 @@ where
 
     fn div(self, rhs: Self) -> Self {
         // println!("division");
-        MULTIPLICATIONS.with(|it| it.set(it.get() + 1));
+        COUNTS.with(|x| x.get().inc_mul());
         Self {
             value: self.value / rhs.value,
         }
@@ -162,7 +174,7 @@ where
     F: Identity<Addition>,
 {
     fn identity() -> Self {
-        CountOps {
+        Self {
             value: F::identity(),
         }
     }
@@ -190,7 +202,7 @@ where
     F: Identity<Multiplication>,
 {
     fn identity() -> Self {
-        CountOps {
+        Self {
             value: F::identity(),
         }
     }
@@ -201,9 +213,10 @@ where
     F: Ring,
 {
     fn multiplicative_inverse(&self) -> Option<Self> {
-        Some(CountOps {
+        Self {
             value: self.value.multiplicative_inverse()?,
-        })
+        }
+        .into()
     }
 }
 impl<F> Field for CountOps<F> where Self: Ring + std::ops::Div<Output = Self> {}
