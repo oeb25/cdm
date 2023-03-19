@@ -167,6 +167,7 @@ where
 {
     fn eq(&self, other: &Self) -> bool {
         use itertools::EitherOrBoth;
+
         self.coef() == other.coef()
             && self
                 .powers()
@@ -187,6 +188,7 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
             powers,
         }
     }
+
     pub fn try_new(ord: Option<O>, coef: impl Into<F>, powers: Vec<Natural>) -> Option<Self> {
         if let Some(ord) = ord {
             return Some(Self::new(ord.clone(), coef.into(), powers));
@@ -197,48 +199,53 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
             None
         }
     }
+
     pub fn coef(&self) -> &F {
         match self {
             Self::Constant(coef) | Self::Mono { coef, .. } => coef,
         }
     }
+
     pub fn ord(&self) -> Option<&O> {
         match self {
             Self::Constant(_) => None,
             Self::Mono { ord, .. } => Some(ord),
         }
     }
+
     pub fn constant(ord: Option<O>, coef: impl Into<F>) -> Self {
-        if let Some(ord) = ord {
-            Self::new(ord, coef, vec![])
-        } else {
-            Self::Constant(coef.into())
-        }
+        let Some(ord) = ord else { return Self::Constant(coef.into()); };
+        Self::new(ord, coef, vec![])
     }
+
     pub fn zero(ord: Option<O>) -> Self
     where
         F: Identity<Addition>,
     {
         Self::constant(ord, <F as Identity<Addition>>::identity())
     }
+
     pub fn is_zero(&self) -> bool
     where
         F: Identity<Addition>,
     {
         <F as Identity<Addition>>::is_identity(self.coef())
     }
+
     pub fn powers(&self) -> &[Natural] {
         match self {
             Self::Constant(_) => &[],
             Self::Mono { powers, .. } => powers,
         }
     }
+
     pub fn without_coef(&self) -> Self
     where
         F: Identity<Multiplication>,
     {
         self.map_coef(|_| F::identity())
     }
+
     pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Self {
         match self {
             Self::Constant(coef) => Self::Constant(f(coef)),
@@ -249,6 +256,7 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
             },
         }
     }
+
     pub fn ord_from<'a>(&'a self, rhs: &'a Self) -> Option<&'a O> {
         match (self, rhs) {
             (Self::Constant(_), Self::Constant(_)) => None,
@@ -256,6 +264,7 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
             (_, Self::Mono { ord, .. }) => Some(ord),
         }
     }
+
     pub fn div(&self, rhs: &Self) -> Option<Self>
     where
         F: Field + std::fmt::Debug,
