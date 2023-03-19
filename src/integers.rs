@@ -17,7 +17,7 @@ impl Group for i128 {}
 impl AbelianGroup for i128 {}
 impl Identity<Multiplication> for i128 {
     fn identity() -> Self {
-        1.into()
+        1
     }
 }
 impl Ring for i128 {

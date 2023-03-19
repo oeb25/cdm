@@ -46,6 +46,15 @@ impl Counts {
         }
     }
 }
+
+pub fn inc_add() {
+    COUNTS.with(|x| x.get().inc_add());
+}
+
+pub fn inc_mul() {
+    COUNTS.with(|x| x.get().inc_mul());
+}
+
 pub fn get_counts() -> Counts {
     COUNTS.with(|x| x.get())
 }
@@ -57,8 +66,7 @@ where
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        // println!("addition");
-        COUNTS.with(|x| x.get().inc_add());
+        inc_add();
         Self {
             value: self.value + rhs.value,
         }
@@ -71,8 +79,7 @@ where
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self {
-        // println!("subtraction");
-        COUNTS.with(|x| x.get().inc_add());
+        inc_add();
         Self {
             value: self.value - rhs.value,
         }
@@ -85,8 +92,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
-        // println!("multiplication");
-        COUNTS.with(|x| x.get().inc_mul());
+        inc_mul();
         Self {
             value: self.value * rhs.value,
         }
@@ -99,8 +105,7 @@ where
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
-        // println!("division");
-        COUNTS.with(|x| x.get().inc_mul());
+        inc_mul();
         Self {
             value: self.value / rhs.value,
         }
