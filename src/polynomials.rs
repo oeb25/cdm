@@ -73,10 +73,12 @@ where
         self.coefficients
             .truncate(u128::from(self.deg()) as usize + 1);
     }
+
     pub fn normalized(mut self) -> Self {
         self.normalize();
         self
     }
+
     pub fn deg(&self) -> Natural {
         let deg = self
             .coefficients

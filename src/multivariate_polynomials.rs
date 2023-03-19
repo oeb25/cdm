@@ -21,11 +21,12 @@ where
     O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
+        use itertools::EitherOrBoth;
         self.terms()
             .zip_longest(other.terms())
-            .map(|ps| match ps {
-                itertools::EitherOrBoth::Both(l, r) => l == r,
-                itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => false,
+            .map(|ps| {
+                let EitherOrBoth::Both(l, r) = ps else { return false };
+                l == r
             })
             .all(|x| x)
     }

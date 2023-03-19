@@ -51,7 +51,7 @@ where
             return Err(NewtonInterpolationError::SamplesNotUnique);
         }
 
-        let stuff: Vec<Vec<Option<F>>> = vec![vec![None; n]; n];
+        let stuff = vec![vec![None; n]; n];
 
         let mut ni = NewtonInterpolation { samples, stuff };
 
