@@ -315,7 +315,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self * &rhs
+        &self * &rhs
     }
 }
 impl<F> std::ops::Mul<&Self> for Polynomial<F>
@@ -325,12 +325,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: &Self) -> Self {
-        self.coefficients
-            .iter()
-            .enumerate()
-            .map(|(i, c)| rhs.scale(c).times_x(i as _))
-            .reduce(|a, b| a + b)
-            .unwrap()
+        &self * rhs
     }
 }
 impl<F> std::ops::Mul<Self> for &Polynomial<F>
@@ -424,7 +419,7 @@ where
     type Output = Self;
 
     fn sub(self, rhs: F) -> Self {
-        self - Self::new(vec![rhs])
+        self - &rhs
     }
 }
 impl<F> std::ops::Sub<&'_ F> for Polynomial<F>
