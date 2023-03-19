@@ -24,7 +24,7 @@ impl<F: std::fmt::Debug> std::fmt::Debug for Gaussian<F> {
 
 impl<F> Gaussian<F> {
     pub fn new(a: F, b: F) -> Self {
-        Gaussian { a, b }
+        Self { a, b }
     }
     pub fn map<T>(self, f: impl Fn(F) -> T) -> Gaussian<T> {
         Gaussian {
@@ -36,7 +36,7 @@ impl<F> Gaussian<F> {
     where
         F: std::ops::Neg<Output = F>,
     {
-        Gaussian {
+        Self {
             a: self.a,
             b: -self.b,
         }
@@ -49,12 +49,12 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         // (a + bi)(c + di)
         // (ac + adi + bic + bidi)
         // (ac - bd + (ad + bc)i)
 
-        Gaussian {
+        Self {
             a: self.a.clone() * rhs.a.clone() - self.b.clone() * rhs.b.clone(),
             b: self.a.clone() * rhs.b + self.b * rhs.a,
         }
@@ -87,7 +87,7 @@ where
 
         let denum = c.clone() * c.clone() + d.clone() * d.clone();
 
-        let res = Gaussian {
+        let res = Self {
             a: (a.clone() * c.clone() + b.clone() * d.clone()) / denum.clone(),
             b: (b * c - a * d) / denum,
         };
