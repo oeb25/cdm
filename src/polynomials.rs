@@ -314,7 +314,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         &self * &rhs
     }
 }
@@ -328,7 +328,7 @@ where
         &self * rhs
     }
 }
-impl<F> std::ops::Mul<Self> for &Polynomial<F>
+impl<F> std::ops::Mul for &Polynomial<F>
 where
     F: Ring,
 {
