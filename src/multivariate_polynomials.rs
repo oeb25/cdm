@@ -57,10 +57,7 @@ where
             move |p| {
                 let mut vs = vec![0; i + 1];
                 vs[i] = p;
-                MultivariatePolynomial::new(
-                    ord.clone(),
-                    vec![Monomial::new(ord.clone(), F::one(), vs)],
-                )
+                Self::new(ord.clone(), vec![Monomial::new(ord.clone(), F::one(), vs)])
             }
         })
     }
@@ -75,7 +72,7 @@ where
             .collect_vec();
         terms.sort_by(|l, r| ord.ord(r, l));
 
-        MultivariatePolynomial::Terms { ord, terms }
+        Self::Terms { ord, terms }
     }
     pub fn try_new(ord: Option<O>, terms: Vec<Monomial<F, O>>) -> Option<Self> {
         let ord = ord.or_else(|| terms.iter().find_map(|t| t.ord().cloned()));
@@ -96,8 +93,8 @@ where
     }
     pub fn ord(&self) -> Option<&O> {
         match self {
-            MultivariatePolynomial::Constant(_) => None,
-            MultivariatePolynomial::Terms { ord, .. } => Some(ord),
+            Self::Constant(_) => None,
+            Self::Terms { ord, .. } => Some(ord),
         }
     }
     pub fn leading_term(&self) -> Monomial<F, O> {
@@ -119,10 +116,10 @@ where
     }
     pub fn terms(&self) -> impl Iterator<Item = Monomial<F, O>> + Clone + '_ {
         match self {
-            MultivariatePolynomial::Constant(c) => {
+            Self::Constant(c) => {
                 Either::Left([Monomial::constant(self.ord().cloned(), c.clone())].into_iter())
             }
-            MultivariatePolynomial::Terms { terms, .. } => Either::Right(terms.iter().cloned()),
+            Self::Terms { terms, .. } => Either::Right(terms.iter().cloned()),
         }
         .filter(|t| !t.is_zero())
     }
@@ -161,8 +158,8 @@ where
             .div(&other.leading_term())
             .unwrap_or_else(|| panic!("{lcm:?}/{:?} failed", other.leading_term()));
 
-        let l = MultivariatePolynomial::from(l);
-        let r = MultivariatePolynomial::from(r);
+        let l = Self::from(l);
+        let r = Self::from(r);
 
         l * self.clone() - r * other.clone()
     }
@@ -258,7 +255,7 @@ where
     O: MonomialOrder<F>,
 {
     fn identity() -> Self {
-        MultivariatePolynomial::Constant(F::one())
+        Self::Constant(F::one())
     }
 }
 impl<F: Ring, O> Ring for MultivariatePolynomial<F, O>
@@ -283,28 +280,28 @@ where
             .map(|(a, b)| a.clone() * b.clone())
             .collect();
 
-        MultivariatePolynomial::try_new(self.ord().or_else(|| rhs.ord()).cloned(), terms).unwrap()
+        Self::try_new(self.ord().or_else(|| rhs.ord()).cloned(), terms).unwrap()
     }
 }
 
-impl<O, const N: Natural> std::ops::Mul<MultivariatePolynomial<Finite<N>, O>> for Finite<N>
+impl<O, const N: Natural> std::ops::Mul<MultivariatePolynomial<Self, O>> for Finite<N>
 where
-    O: MonomialOrder<Finite<N>>,
+    O: MonomialOrder<Self>,
 {
-    type Output = MultivariatePolynomial<Finite<N>, O>;
+    type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: MultivariatePolynomial<Finite<N>, O>) -> Self::Output {
-        MultivariatePolynomial::constant(None, self) * rhs
+    fn mul(self, rhs: Self::Output) -> Self::Output {
+        Self::Output::constant(None, self) * rhs
     }
 }
-impl<O> std::ops::Mul<MultivariatePolynomial<Rational, O>> for Rational
+impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Rational
 where
-    O: MonomialOrder<Rational>,
+    O: MonomialOrder<Self>,
 {
-    type Output = MultivariatePolynomial<Rational, O>;
+    type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: MultivariatePolynomial<Rational, O>) -> Self::Output {
-        MultivariatePolynomial::constant(None, self) * rhs
+    fn mul(self, rhs: Self::Output) -> Self::Output {
+        Self::Output::constant(None, self) * rhs
     }
 }
 impl<O> std::ops::Mul<MultivariatePolynomial<Integer, O>> for Integer
@@ -314,7 +311,7 @@ where
     type Output = MultivariatePolynomial<Integer, O>;
 
     fn mul(self, rhs: MultivariatePolynomial<Integer, O>) -> Self::Output {
-        MultivariatePolynomial::constant(None, self) * rhs
+        Self::Output::constant(None, self) * rhs
     }
 }
 impl<O> std::ops::Mul<MultivariatePolynomial<Real, O>> for Real
@@ -324,7 +321,7 @@ where
     type Output = MultivariatePolynomial<Real, O>;
 
     fn mul(self, rhs: MultivariatePolynomial<Real, O>) -> Self::Output {
-        MultivariatePolynomial::constant(None, self) * rhs
+        Self::Output::constant(None, self) * rhs
     }
 }
 
@@ -335,7 +332,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Finite<N>) -> Self::Output {
-        self * MultivariatePolynomial::constant(None, rhs)
+        self * Self::constant(None, rhs)
     }
 }
 impl<O> std::ops::Mul<Rational> for MultivariatePolynomial<Rational, O>
@@ -345,7 +342,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Rational) -> Self::Output {
-        self * MultivariatePolynomial::constant(None, rhs)
+        self * Self::constant(None, rhs)
     }
 }
 impl<O> std::ops::Mul<Integer> for MultivariatePolynomial<Integer, O>
@@ -355,7 +352,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Integer) -> Self::Output {
-        self * MultivariatePolynomial::constant(None, rhs)
+        self * Self::constant(None, rhs)
     }
 }
 impl<O> std::ops::Mul<Real> for MultivariatePolynomial<Real, O>
@@ -365,6 +362,6 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Real) -> Self::Output {
-        self * MultivariatePolynomial::constant(None, rhs)
+        self * Self::constant(None, rhs)
     }
 }
