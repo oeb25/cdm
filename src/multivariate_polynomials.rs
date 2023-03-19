@@ -51,7 +51,7 @@ where
     F: Ring,
     O: MonomialOrder<F>,
 {
-    pub fn init<const N: usize>(ord: O) -> [impl Fn(Natural) -> MultivariatePolynomial<F, O>; N] {
+    pub fn init<const N: usize>(ord: O) -> [impl Fn(Natural) -> Self; N] {
         std::array::from_fn(|i| {
             let ord = ord.clone();
             move |p| {
@@ -198,7 +198,7 @@ where
 {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self {
         Self::try_new(
             self.ord().or_else(|| rhs.ord()).cloned(),
             self.terms()
@@ -216,7 +216,7 @@ where
 {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
+    fn neg(self) -> Self {
         Self::try_new(
             self.ord().cloned(),
             self.terms()
@@ -234,7 +234,7 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         self + (-rhs)
     }
 }
@@ -244,7 +244,7 @@ where
     O: MonomialOrder<F>,
 {
     fn identity() -> Self {
-        MultivariatePolynomial::Constant(F::zero())
+        Self::Constant(F::zero())
     }
 }
 impl<F: Ring, O> Group for MultivariatePolynomial<F, O> where O: MonomialOrder<F> {}
@@ -273,7 +273,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         let terms = self
             .terms()
             .cartesian_product(rhs.terms())
@@ -310,7 +310,7 @@ where
 {
     type Output = MultivariatePolynomial<Integer, O>;
 
-    fn mul(self, rhs: MultivariatePolynomial<Integer, O>) -> Self::Output {
+    fn mul(self, rhs: Self::Output) -> Self::Output {
         Self::Output::constant(None, self) * rhs
     }
 }

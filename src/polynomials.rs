@@ -386,7 +386,7 @@ where
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Polynomial {
+        Self {
             coefficients: self.coefficients.into_iter().map(|c| -c).collect(),
         }
         .normalized()
@@ -449,7 +449,7 @@ where
 
 impl<F: Group> Identity<Addition> for Polynomial<F> {
     fn identity() -> Self {
-        Polynomial {
+        Self {
             coefficients: vec![],
         }
     }
@@ -462,7 +462,7 @@ where
     F: Identity<Multiplication> + Identity<Addition>,
 {
     fn identity() -> Self {
-        Polynomial {
+        Self {
             coefficients: vec![<F as Identity<Multiplication>>::identity()],
         }
     }
