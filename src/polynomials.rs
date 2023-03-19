@@ -317,7 +317,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self {
+    fn mul(self, rhs: Self) -> Self::Output {
         self.coefficients
             .iter()
             .enumerate()

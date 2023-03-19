@@ -15,7 +15,7 @@ pub struct Real {
 }
 impl Real {
     pub fn abs(self) -> Self {
-        Real {
+        Self {
             value: self.value.abs(),
         }
     }
@@ -23,14 +23,14 @@ impl Real {
 
 impl Identity<Addition> for Real {
     fn identity() -> Self {
-        Real { value: 0.0 }
+        Self { value: 0.0 }
     }
 }
 impl Group for Real {}
 impl AbelianGroup for Real {}
 impl Identity<Multiplication> for Real {
     fn identity() -> Self {
-        Real { value: 1.0 }
+        Self { value: 1.0 }
     }
 }
 impl Ring for Real {
@@ -38,9 +38,10 @@ impl Ring for Real {
         if self.is_zero() {
             None
         } else {
-            Some(Real {
+            (Self {
                 value: 1.0 / self.value,
             })
+            .into()
         }
     }
 }
