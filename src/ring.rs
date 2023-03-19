@@ -21,10 +21,6 @@ pub trait Ring: AbelianGroup + std::ops::Mul<Output = Self> + Identity<Multiplic
     where
         Self: Clone,
     {
-        let mut total = Ring::one();
-        for _ in 0..pow.into() {
-            total = total * self.clone();
-        }
-        total
+        (0..pow).fold(Ring::one(), |a, _| self.clone() * a)
     }
 }

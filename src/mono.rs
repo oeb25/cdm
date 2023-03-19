@@ -345,9 +345,6 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
-        let l = format!("{:?}", self);
-        let r = format!("{:?}", rhs);
-
         Self::try_new(
             self.ord_from(&rhs).cloned(),
             self.coef().clone() * rhs.coef().clone(),

@@ -94,11 +94,7 @@ impl Rational {
 
 #[test]
 fn rational_signed_normalize() {
-    let minus_1 = Rational {
-        num: (-1i128).into(),
-        denom: 1u128.into(),
-    }
-    .normalized();
+    let minus_1 = Rational { num: -1, denom: 1 }.normalized();
 
     assert_eq!(rational(1.), minus_1 / minus_1);
 }
@@ -107,7 +103,7 @@ impl From<i128> for Rational {
     fn from(n: i128) -> Self {
         Self {
             num: n.into(),
-            denom: 1u128.into(),
+            denom: 1,
         }
     }
 }

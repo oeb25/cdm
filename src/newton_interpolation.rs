@@ -154,11 +154,10 @@ mod tests {
 
     use crate::{
         count_ops::{self, CountOps},
-        polynomials::Polynomial,
         Finite, Rational,
     };
 
-    use super::{newton, newton_slice, NewtonInterpolation, NewtonInterpolationError};
+    use super::{NewtonInterpolation, NewtonInterpolationError};
 
     #[test]
     fn example_a() -> Result<(), NewtonInterpolationError> {

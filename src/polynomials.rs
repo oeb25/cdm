@@ -66,21 +66,16 @@ where
     F: Identity<Addition>,
 {
     pub fn new(coefficients: Vec<F>) -> Self {
-        let mut p = Polynomial { coefficients };
-        p.normalize();
-        p
+        Self { coefficients }.normalized()
     }
+
     pub fn normalize(&mut self) {
         self.coefficients
             .truncate(u128::from(self.deg()) as usize + 1);
     }
-    pub fn normalized(&self) -> Self
-    where
-        F: Clone,
-    {
-        let mut normal = self.clone();
-        normal.normalize();
-        normal
+    pub fn normalized(mut self) -> Self {
+        self.normalize();
+        self
     }
     pub fn deg(&self) -> Natural {
         let deg = self
