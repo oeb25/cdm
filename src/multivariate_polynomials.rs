@@ -322,43 +322,14 @@ where
     }
 }
 
-impl<O, const N: Natural> std::ops::Mul<Finite<N>> for MultivariatePolynomial<Finite<N>, O>
+impl<R, O> std::ops::Mul<R> for MultivariatePolynomial<R, O>
 where
-    O: MonomialOrder<Finite<N>>,
+    R: Ring,
+    O: MonomialOrder<R>,
 {
     type Output = Self;
 
-    fn mul(self, rhs: Finite<N>) -> Self {
-        self * Self::constant(None, rhs)
-    }
-}
-impl<O> std::ops::Mul<Rational> for MultivariatePolynomial<Rational, O>
-where
-    O: MonomialOrder<Rational>,
-{
-    type Output = Self;
-
-    fn mul(self, rhs: Rational) -> Self {
-        self * Self::constant(None, rhs)
-    }
-}
-impl<O> std::ops::Mul<Integer> for MultivariatePolynomial<Integer, O>
-where
-    O: MonomialOrder<Integer>,
-{
-    type Output = Self;
-
-    fn mul(self, rhs: Integer) -> Self {
-        self * Self::constant(None, rhs)
-    }
-}
-impl<O> std::ops::Mul<Real> for MultivariatePolynomial<Real, O>
-where
-    O: MonomialOrder<Real>,
-{
-    type Output = Self;
-
-    fn mul(self, rhs: Real) -> Self {
+    fn mul(self, rhs: R) -> Self {
         self * Self::constant(None, rhs)
     }
 }
