@@ -293,8 +293,8 @@ where
 // we implement this via a macro rather than by a blanket implementation
 // like below since the implementation rules in Rust are kind of stupid
 macro_rules! impl_mul {
-    ($ty:ty) => {
-        impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for $ty
+    ($ty:ty, $tt:tt) => {
+        impl<$tt> std::ops::Mul<MultivariatePolynomial<Self, O>> for $ty
         where
             O: MonomialOrder<Self>,
         {
@@ -307,9 +307,9 @@ macro_rules! impl_mul {
     };
 }
 
-impl_mul!(Real);
-impl_mul!(Integer);
-impl_mul!(Rational);
+impl_mul!(Real, O);
+impl_mul!(Integer, O);
+impl_mul!(Rational, O);
 
 impl<R, O> std::ops::Mul<R> for MultivariatePolynomial<R, O>
 where
