@@ -10,27 +10,23 @@ use crate::{
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Add, Sub, Neg, Mul, Div)]
 #[mul(forward)]
 #[div(forward)]
-pub struct Real {
-    value: f64,
-}
+pub struct Real(f64);
 impl Real {
     pub fn abs(self) -> Self {
-        Self {
-            value: self.value.abs(),
-        }
+        Self(self.0.abs())
     }
 }
 
 impl Identity<Addition> for Real {
     fn identity() -> Self {
-        Self { value: 0.0 }
+        Self(0.0)
     }
 }
 impl Group for Real {}
 impl AbelianGroup for Real {}
 impl Identity<Multiplication> for Real {
     fn identity() -> Self {
-        Self { value: 1.0 }
+        Self(1.0)
     }
 }
 impl Ring for Real {
@@ -38,10 +34,7 @@ impl Ring for Real {
         if self.is_zero() {
             None
         } else {
-            (Self {
-                value: 1.0 / self.value,
-            })
-            .into()
+            Self(1.0 / self.0).into()
         }
     }
 }
