@@ -156,7 +156,7 @@ pub enum Monomial<F, O: MonomialOrder<F>> {
 }
 impl<F: Default, O: MonomialOrder<F>> Default for Monomial<F, O> {
     fn default() -> Self {
-        Monomial::Constant(F::default())
+        Self::Constant(F::default())
     }
 }
 
@@ -181,7 +181,7 @@ where
 
 impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     pub fn new(ord: O, coef: impl Into<F>, powers: Vec<Natural>) -> Self {
-        Monomial::Mono {
+        Self::Mono {
             ord,
             coef: coef.into(),
             powers,
@@ -189,31 +189,30 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     }
     pub fn try_new(ord: Option<O>, coef: impl Into<F>, powers: Vec<Natural>) -> Option<Self> {
         if let Some(ord) = ord {
-            Some(Monomial::new(ord.clone(), coef.into(), powers))
+            return Some(Self::new(ord.clone(), coef.into(), powers));
+        }
+        if powers.is_empty() || powers.iter().all(|c| *c == 0) {
+            Some(Self::constant(None, coef.into()))
         } else {
-            if powers.is_empty() || powers.iter().all(|c| *c == 0) {
-                Some(Monomial::constant(None, coef.into()))
-            } else {
-                None
-            }
+            None
         }
     }
     pub fn coef(&self) -> &F {
         match self {
-            Monomial::Constant(coef) | Monomial::Mono { coef, .. } => coef,
+            Self::Constant(coef) | Self::Mono { coef, .. } => coef,
         }
     }
     pub fn ord(&self) -> Option<&O> {
         match self {
-            Monomial::Constant(_) => None,
-            Monomial::Mono { ord, .. } => Some(ord),
+            Self::Constant(_) => None,
+            Self::Mono { ord, .. } => Some(ord),
         }
     }
     pub fn constant(ord: Option<O>, coef: impl Into<F>) -> Self {
         if let Some(ord) = ord {
-            Monomial::new(ord, coef, vec![])
+            Self::new(ord, coef, vec![])
         } else {
-            Monomial::Constant(coef.into())
+            Self::Constant(coef.into())
         }
     }
     pub fn zero(ord: Option<O>) -> Self
@@ -230,8 +229,8 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     }
     pub fn powers(&self) -> &[Natural] {
         match self {
-            Monomial::Constant(_) => &[],
-            Monomial::Mono { powers, .. } => powers,
+            Self::Constant(_) => &[],
+            Self::Mono { powers, .. } => powers,
         }
     }
     pub fn without_coef(&self) -> Monomial<F, O>
@@ -242,8 +241,8 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     }
     pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Monomial<F, O> {
         match self {
-            Monomial::Constant(coef) => Monomial::Constant(f(coef)),
-            Monomial::Mono { ord, coef, powers } => Monomial::Mono {
+            Self::Constant(coef) => Self::Constant(f(coef)),
+            Self::Mono { ord, coef, powers } => Self::Mono {
                 ord: ord.clone(),
                 coef: f(coef),
                 powers: powers.clone(),
@@ -252,9 +251,9 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     }
     pub fn ord_from<'a>(&'a self, rhs: &'a Self) -> Option<&'a O> {
         match (self, rhs) {
-            (Monomial::Constant(_), Monomial::Constant(_)) => None,
-            (Monomial::Mono { ord, .. }, _) => Some(ord),
-            (_, Monomial::Mono { ord, .. }) => Some(ord),
+            (Self::Constant(_), Self::Constant(_)) => None,
+            (Self::Mono { ord, .. }, _) => Some(ord),
+            (_, Self::Mono { ord, .. }) => Some(ord),
         }
     }
     pub fn div(&self, rhs: &Self) -> Option<Self>
