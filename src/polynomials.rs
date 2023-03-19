@@ -315,12 +315,7 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.coefficients
-            .iter()
-            .enumerate()
-            .map(|(i, c)| rhs.scale(c).times_x(i as _))
-            .reduce(|a, b| a + b)
-            .unwrap()
+        self * &rhs
     }
 }
 impl<F> std::ops::Mul<&Self> for Polynomial<F>
@@ -360,16 +355,15 @@ where
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
+        use itertools::EitherOrBoth;
         Self {
             coefficients: self
                 .coefficients
                 .iter()
                 .zip_longest(&rhs.coefficients)
                 .map(|cs| match cs {
-                    itertools::EitherOrBoth::Both(l, r) => l.clone() + r.clone(),
-                    itertools::EitherOrBoth::Left(c) | itertools::EitherOrBoth::Right(c) => {
-                        c.clone()
-                    }
+                    EitherOrBoth::Both(l, r) => l.clone() + r.clone(),
+                    EitherOrBoth::Left(c) | EitherOrBoth::Right(c) => c.clone(),
                 })
                 .collect(),
         }
