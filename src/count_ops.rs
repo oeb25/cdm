@@ -67,9 +67,7 @@ where
 
     fn add(self, rhs: Self) -> Self {
         inc_add();
-        Self {
-            value: self.value + rhs.value,
-        }
+        (self.value + rhs.value).into()
     }
 }
 impl<F> std::ops::Sub for CountOps<F>
@@ -80,9 +78,7 @@ where
 
     fn sub(self, rhs: Self) -> Self {
         inc_add();
-        Self {
-            value: self.value - rhs.value,
-        }
+        (self.value - rhs.value).into()
     }
 }
 impl<F> std::ops::Mul for CountOps<F>
@@ -93,9 +89,7 @@ where
 
     fn mul(self, rhs: Self) -> Self {
         inc_mul();
-        Self {
-            value: self.value * rhs.value,
-        }
+        (self.value * rhs.value).into()
     }
 }
 impl<F> std::ops::Div for CountOps<F>
@@ -106,9 +100,7 @@ where
 
     fn div(self, rhs: Self) -> Self {
         inc_mul();
-        Self {
-            value: self.value / rhs.value,
-        }
+        (self.value / rhs.value).into()
     }
 }
 
