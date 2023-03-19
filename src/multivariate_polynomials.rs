@@ -306,21 +306,21 @@ where
 }
 impl<O> std::ops::Mul<MultivariatePolynomial<Integer, O>> for Integer
 where
-    O: MonomialOrder<Integer>,
+    O: MonomialOrder<Self>,
 {
-    type Output = MultivariatePolynomial<Integer, O>;
+    type Output = MultivariatePolynomial<Self, O>;
 
     fn mul(self, rhs: Self::Output) -> Self::Output {
         Self::Output::constant(None, self) * rhs
     }
 }
-impl<O> std::ops::Mul<MultivariatePolynomial<Real, O>> for Real
+impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Real
 where
-    O: MonomialOrder<Real>,
+    O: MonomialOrder<Self>,
 {
-    type Output = MultivariatePolynomial<Real, O>;
+    type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: MultivariatePolynomial<Real, O>) -> Self::Output {
+    fn mul(self, rhs: Self::Output) -> Self::Output {
         Self::Output::constant(None, self) * rhs
     }
 }
