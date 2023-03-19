@@ -133,14 +133,13 @@ where
         let m = b.deg();
 
         assert!(n >= m, "n = {n:?}, m = {m:?} ({a:?}, {b:?})");
-        assert!(m >= 0);
 
         let mut r = a.clone();
         let u = b.lc().multiplicative_inverse()?;
 
         let mut q = vec![];
 
-        for i in (0..=u128::from(n - m)).rev() {
+        for i in (0..=(n - m).into()).rev() {
             if r.deg() == m + Natural::from(i) {
                 q.push(r.lc() * u.clone());
                 r = r - b.times_x(i).scale(q.last().unwrap());
@@ -151,7 +150,7 @@ where
 
         q.reverse();
 
-        Some((Polynomial { coefficients: q }, r))
+        Some((Self { coefficients: q }, r))
     }
 
     pub fn lc(&self) -> F
@@ -168,7 +167,7 @@ where
     where
         F: Group,
     {
-        let mut new = Polynomial {
+        let mut new = Self {
             coefficients: self.coefficients.clone(),
         };
 
@@ -191,21 +190,21 @@ where
             .fold(F::zero(), move |sum, c| sum * x.clone() + c.clone())
     }
 
-    pub fn x() -> Polynomial<F>
+    pub fn x() -> Self
     where
         F: Identity<Addition> + Identity<Multiplication>,
     {
-        Polynomial::new(vec![
+        Self::new(vec![
             <F as Identity<Addition>>::identity(),
             <F as Identity<Multiplication>>::identity(),
         ])
     }
 
-    pub fn diff(&self) -> Polynomial<F>
+    pub fn diff(&self) -> Self
     where
         F: Ring,
     {
-        Polynomial::new(
+        Self::new(
             (1..=self.deg().into())
                 .map(|i| {
                     self.coefficients[i as usize].clone()
@@ -220,10 +219,10 @@ where
         F: Clone,
     {
         (
-            Polynomial {
+            Self {
                 coefficients: self.coefficients[0..at].to_vec(),
             },
-            Polynomial {
+            Self {
                 coefficients: self.coefficients[at..].to_vec(),
             },
         )
