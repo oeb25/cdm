@@ -20,7 +20,7 @@ impl<const N: Natural> std::fmt::Debug for Finite<N> {
 }
 impl<const N: Natural> From<Natural> for Finite<N> {
     fn from(i: Natural) -> Self {
-        Self { val: i % N }
+        (i % N).into()
     }
 }
 impl<const N: Natural> From<Integer> for Finite<N> {
@@ -60,7 +60,7 @@ impl<const N: Natural> std::ops::Sub for Finite<N> {
 }
 impl<const N: Natural> Identity<Addition> for Finite<N> {
     fn identity() -> Self {
-        Self { val: 0 }
+        0u128.into()
     }
 }
 impl<const N: Natural> Group for Finite<N> {}
@@ -75,20 +75,15 @@ impl<const N: Natural> std::ops::Mul for Finite<N> {
 }
 impl<const N: Natural> Identity<Multiplication> for Finite<N> {
     fn identity() -> Self {
-        Self { val: 1 }
+        1u128.into()
     }
 }
 impl<const N: Natural> Ring for Finite<N> {
     fn multiplicative_inverse(&self) -> Option<Self> {
-        (1..N)
-            .find(|x| (x * self.val) % N == 1)
-            .map(|x| Finite { val: x })
+        (1..N).find(|x| (x * self.val) % N == 1).map(Self::from)
     }
 
-    fn pow(&self, pow: crate::Natural) -> Self
-    where
-        Self: Clone,
-    {
+    fn pow(&self, pow: Natural) -> Self {
         self.val.pow(Natural::from(pow) as u32).into()
     }
 }

@@ -17,10 +17,7 @@ pub trait Ring: AbelianGroup + std::ops::Mul<Output = Self> + Identity<Multiplic
     }
     /// The multiplicative inverse in the case that `self` is a unit
     fn multiplicative_inverse(&self) -> Option<Self>;
-    fn pow(&self, pow: Natural) -> Self
-    where
-        Self: Clone,
-    {
+    fn pow(&self, pow: Natural) -> Self {
         (0..pow).fold(Ring::one(), |a, _| self.clone() * a)
     }
 }
