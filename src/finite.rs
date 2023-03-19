@@ -20,17 +20,17 @@ impl<const N: Natural> std::fmt::Debug for Finite<N> {
 }
 impl<const N: Natural> From<Natural> for Finite<N> {
     fn from(i: Natural) -> Self {
-        Finite { val: i % N }
+        Self { val: i % N }
     }
 }
 impl<const N: Natural> From<Integer> for Finite<N> {
     fn from(i: Integer) -> Self {
         if i >= 0 {
-            Finite {
+            Self {
                 val: (i as Natural) % N,
             }
         } else {
-            -Finite {
+            -Self {
                 val: i.unsigned_abs() % N,
             }
         }
@@ -40,27 +40,27 @@ impl<const N: Natural> From<Integer> for Finite<N> {
 impl<const N: Natural> std::ops::Add for Finite<N> {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self {
         ((self.val + rhs.val) % N).into()
     }
 }
 impl<const N: Natural> std::ops::Neg for Finite<N> {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
+    fn neg(self) -> Self {
         ((N - self.val) % N).into()
     }
 }
 impl<const N: Natural> std::ops::Sub for Finite<N> {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         self + (-rhs)
     }
 }
 impl<const N: Natural> Identity<Addition> for Finite<N> {
     fn identity() -> Self {
-        Finite { val: 0 }
+        Self { val: 0 }
     }
 }
 impl<const N: Natural> Group for Finite<N> {}
@@ -69,13 +69,13 @@ impl<const N: Natural> AbelianGroup for Finite<N> {}
 impl<const N: Natural> std::ops::Mul for Finite<N> {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         ((self.val * rhs.val) % N).into()
     }
 }
 impl<const N: Natural> Identity<Multiplication> for Finite<N> {
     fn identity() -> Self {
-        Finite { val: 1 }
+        Self { val: 1 }
     }
 }
 impl<const N: Natural> Ring for Finite<N> {
@@ -96,9 +96,9 @@ impl<const N: Natural> Ring for Finite<N> {
 impl<const N: Natural> std::ops::Div for Finite<N> {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         for i in 0..N {
-            let i = Finite::from(i);
+            let i = Self::from(i);
             if self == rhs * i {
                 return i;
             }

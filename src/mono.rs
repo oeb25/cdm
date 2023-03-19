@@ -344,7 +344,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         let l = format!("{:?}", self);
         let r = format!("{:?}", rhs);
 
@@ -368,7 +368,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: F) -> Self::Output {
+    fn mul(self, rhs: F) -> Self {
         Self::try_new(
             self.ord().cloned(),
             self.coef().clone() * rhs,
@@ -385,7 +385,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: F) -> Self::Output {
+    fn div(self, rhs: F) -> Self {
         Self::try_new(
             self.ord().cloned(),
             self.coef().clone() / rhs,

@@ -115,7 +115,7 @@ impl From<i128> for Rational {
 impl std::ops::Add for Rational {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self {
         Self {
             num: self.num * rhs.denom as i128 + self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
@@ -126,7 +126,7 @@ impl std::ops::Add for Rational {
 impl std::ops::Sub for Rational {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         Self {
             num: self.num * rhs.denom as i128 - self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
@@ -137,7 +137,7 @@ impl std::ops::Sub for Rational {
 impl std::ops::Neg for Rational {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
+    fn neg(self) -> Self {
         Self {
             num: -self.num,
             denom: self.denom,
@@ -148,14 +148,14 @@ impl std::ops::Neg for Rational {
 impl std::ops::Rem for Rational {
     type Output = Self;
 
-    fn rem(self, _: Self) -> Self::Output {
+    fn rem(self, _: Self) -> Self {
         Self::zero()
     }
 }
 impl std::ops::Div for Rational {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         Self {
             num: if rhs.num == rhs.num.abs() {
                 self.num
@@ -170,7 +170,7 @@ impl std::ops::Div for Rational {
 impl std::ops::Mul for Rational {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         Self {
             num: self.num * rhs.num,
             denom: self.denom * rhs.denom,

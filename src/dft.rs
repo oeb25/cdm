@@ -12,7 +12,7 @@ pub struct PrimitiveRootOfUnity<R> {
 
 impl<R> PrimitiveRootOfUnity<R> {
     /// Definition 8.5
-    pub fn new(n: Natural, omega: R) -> Option<PrimitiveRootOfUnity<R>>
+    pub fn new(n: Natural, omega: R) -> Option<Self>
     where
         R: Ring,
     {
@@ -33,7 +33,7 @@ impl<R> PrimitiveRootOfUnity<R> {
             return None;
         }
 
-        Some(PrimitiveRootOfUnity {
+        Some(Self {
             nth: n,
             value: omega,
             inverse,
@@ -52,7 +52,7 @@ impl<R> PrimitiveRootOfUnity<R> {
     where
         R: Clone + std::ops::Mul<Output = R>,
     {
-        PrimitiveRootOfUnity {
+        Self {
             nth: self.nth * 2,
             value: self.value.clone() * self.value,
             inverse: self.inverse.clone() * self.inverse,

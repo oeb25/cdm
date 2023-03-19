@@ -331,7 +331,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Finite<N>) -> Self::Output {
+    fn mul(self, rhs: Finite<N>) -> Self {
         self * Self::constant(None, rhs)
     }
 }
@@ -341,7 +341,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Rational) -> Self::Output {
+    fn mul(self, rhs: Rational) -> Self {
         self * Self::constant(None, rhs)
     }
 }
@@ -351,7 +351,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Integer) -> Self::Output {
+    fn mul(self, rhs: Integer) -> Self {
         self * Self::constant(None, rhs)
     }
 }
@@ -361,7 +361,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Real) -> Self::Output {
+    fn mul(self, rhs: Real) -> Self {
         self * Self::constant(None, rhs)
     }
 }

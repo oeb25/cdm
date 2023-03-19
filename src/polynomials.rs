@@ -317,7 +317,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         self.coefficients
             .iter()
             .enumerate()
@@ -332,7 +332,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: &Self) -> Self::Output {
+    fn mul(self, rhs: &Self) -> Self {
         self.coefficients
             .iter()
             .enumerate()
@@ -362,8 +362,8 @@ where
 {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Polynomial {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             coefficients: self
                 .coefficients
                 .iter()
@@ -385,7 +385,7 @@ where
 {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
+    fn neg(self) -> Self {
         Self {
             coefficients: self.coefficients.into_iter().map(|c| -c).collect(),
         }
@@ -398,7 +398,7 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         self + (-rhs)
     }
 }
@@ -408,7 +408,7 @@ where
 {
     type Output = Self;
 
-    fn rem(self, rhs: Self) -> Self::Output {
+    fn rem(self, rhs: Self) -> Self {
         if self.deg() < rhs.deg() {
             self
         } else {
@@ -422,7 +422,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         self.div_rem(&rhs).unwrap().0.normalized()
     }
 }
@@ -432,7 +432,7 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: F) -> Self::Output {
+    fn sub(self, rhs: F) -> Self {
         self - Self::new(vec![rhs])
     }
 }
@@ -442,7 +442,7 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: &'_ F) -> Self::Output {
+    fn sub(self, rhs: &'_ F) -> Self {
         self - Self::new(vec![rhs.clone()])
     }
 }

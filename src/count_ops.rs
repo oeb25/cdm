@@ -44,10 +44,10 @@ where
 {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self {
         // println!("addition");
         ADDITIONS.with(|it| it.set(it.get() + 1));
-        CountOps {
+        Self {
             value: self.value + rhs.value,
         }
     }
@@ -58,10 +58,10 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         // println!("subtraction");
         ADDITIONS.with(|it| it.set(it.get() + 1));
-        CountOps {
+        Self {
             value: self.value - rhs.value,
         }
     }
@@ -72,10 +72,10 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         // println!("multiplication");
         MULTIPLICATIONS.with(|it| it.set(it.get() + 1));
-        CountOps {
+        Self {
             value: self.value * rhs.value,
         }
     }
@@ -86,10 +86,10 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         // println!("division");
         MULTIPLICATIONS.with(|it| it.set(it.get() + 1));
-        CountOps {
+        Self {
             value: self.value / rhs.value,
         }
     }

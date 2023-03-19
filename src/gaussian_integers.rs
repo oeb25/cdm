@@ -72,7 +72,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         // (a + bi)/(c + di) = (ac + bd + (bc - ad)i)/(cc + dd)
         // ((a + bi)*(c - di))/((c + di)*(c - di))
         // ((a + bi)*(c - di))/(cc + dd)
@@ -101,7 +101,7 @@ where
 impl<F> std::ops::Rem for Gaussian<F> {
     type Output = Self;
 
-    fn rem(self, rhs: Self) -> Self::Output {
+    fn rem(self, rhs: Self) -> Self {
         todo!()
     }
 }
@@ -111,7 +111,7 @@ where
     F: Identity<Addition>,
 {
     fn identity() -> Self {
-        Gaussian {
+        Self {
             a: F::identity(),
             b: F::identity(),
         }
@@ -121,7 +121,7 @@ impl<F: Group> Group for Gaussian<F> {}
 impl<F: Group> AbelianGroup for Gaussian<F> {}
 impl<F: Identity<Multiplication> + Identity<Addition>> Identity<Multiplication> for Gaussian<F> {
     fn identity() -> Self {
-        Gaussian {
+        Self {
             a: <F as Identity<Multiplication>>::identity(),
             b: <F as Identity<Addition>>::identity(),
         }
