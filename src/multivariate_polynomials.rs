@@ -99,18 +99,22 @@ where
             .max_by(|l, r| self.ord().unwrap().ord(l, r))
             .unwrap_or_else(|| Monomial::zero(self.ord().cloned()))
     }
+
     pub fn leading_coef(&self) -> F {
         self.leading_term().coef().clone()
     }
+
     pub fn leading_monomial(&self) -> Monomial<F, O>
     where
         F: Identity<Multiplication>,
     {
         self.leading_term().without_coef()
     }
+
     pub fn multi_deg(&self) -> Vec<Natural> {
         todo!()
     }
+
     pub fn terms(&self) -> impl Iterator<Item = Monomial<F, O>> + Clone + '_ {
         match self {
             Self::Constant(c) => {
@@ -120,6 +124,7 @@ where
         }
         .filter(|t| !t.is_zero())
     }
+
     pub fn minimize(&self) -> Self
     where
         F: Field,
@@ -131,6 +136,7 @@ where
 
         Self::try_new(self.ord().cloned(), terms).unwrap()
     }
+
     pub fn s_polynomial(&self, other: &Self) -> Self
     where
         F: Field + std::fmt::Debug,
@@ -160,6 +166,7 @@ where
 
         l * self.clone() - r * other.clone()
     }
+
     pub fn div_mono(&self, m: &Monomial<F, O>) -> Option<Self>
     where
         F: Field + std::fmt::Debug,
