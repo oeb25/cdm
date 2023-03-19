@@ -173,11 +173,8 @@ where
     }
 
     pub fn constant(ord: Option<O>, c: impl Into<F>) -> Self {
-        if let Some(ord) = ord {
-            Self::new(ord.clone(), vec![Monomial::new(ord, c, vec![])])
-        } else {
-            Self::Constant(c.into())
-        }
+        let Some(ord) = ord else { return Self::Constant(c.into());};
+        Self::new(ord.clone(), vec![Monomial::new(ord, c, vec![])])
     }
 }
 
@@ -304,7 +301,7 @@ where
         Self::Output::constant(None, self) * rhs
     }
 }
-impl<O> std::ops::Mul<MultivariatePolynomial<Integer, O>> for Integer
+impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Integer
 where
     O: MonomialOrder<Self>,
 {
