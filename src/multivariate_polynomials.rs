@@ -288,36 +288,27 @@ where
         Self::Output::constant(None, self) * rhs
     }
 }
-impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Rational
-where
-    O: MonomialOrder<Self>,
-{
-    type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: Self::Output) -> Self::Output {
-        Self::Output::constant(None, self) * rhs
-    }
-}
-impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Integer
-where
-    O: MonomialOrder<Self>,
-{
-    type Output = MultivariatePolynomial<Self, O>;
+// we implement this via a macro rather than by a blanket implementation
+// like below since the implementation rules in Rust are kind of stupid
+macro_rules! impl_mul {
+    ($ty:ty) => {
+        impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for $ty
+        where
+            O: MonomialOrder<Self>,
+        {
+            type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: Self::Output) -> Self::Output {
-        Self::Output::constant(None, self) * rhs
-    }
+            fn mul(self, rhs: Self::Output) -> Self::Output {
+                Self::Output::constant(None, self) * rhs
+            }
+        }
+    };
 }
-impl<O> std::ops::Mul<MultivariatePolynomial<Self, O>> for Real
-where
-    O: MonomialOrder<Self>,
-{
-    type Output = MultivariatePolynomial<Self, O>;
 
-    fn mul(self, rhs: Self::Output) -> Self::Output {
-        Self::Output::constant(None, self) * rhs
-    }
-}
+impl_mul!(Real);
+impl_mul!(Integer);
+impl_mul!(Rational);
 
 impl<R, O> std::ops::Mul<R> for MultivariatePolynomial<R, O>
 where
