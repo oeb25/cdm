@@ -92,14 +92,10 @@ impl<const N: Natural> std::ops::Div for Finite<N> {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
-        for i in 0..N {
-            let i = Self::from(i);
-            if self == rhs * i {
-                return i;
-            }
-        }
-
-        0u128.into()
+        (0..N)
+            .map(Self::from)
+            .find(|i| self == rhs * *i)
+            .unwrap_or_else(|| 0u128.into())
     }
 }
 impl<const N: Natural> Field for Finite<N> {}

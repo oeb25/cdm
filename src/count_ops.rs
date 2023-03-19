@@ -171,9 +171,7 @@ where
     F: Identity<Addition>,
 {
     fn identity() -> Self {
-        Self {
-            value: F::identity(),
-        }
+        F::identity().into()
     }
 }
 impl<F> Group for CountOps<F> where
@@ -199,9 +197,7 @@ where
     F: Identity<Multiplication>,
 {
     fn identity() -> Self {
-        Self {
-            value: F::identity(),
-        }
+        F::identity().into()
     }
 }
 impl<F> Ring for CountOps<F>
