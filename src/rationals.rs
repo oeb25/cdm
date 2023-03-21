@@ -1,9 +1,4 @@
-use crate::{
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Integer, Natural, Ring,
-};
+use crate::prelude::*;
 
 pub fn rational(f: f64) -> Rational {
     Rational::approximate(f)
@@ -58,13 +53,13 @@ impl Rational {
             num = -num;
         }
 
-        Rational {
+        Self {
             num: num as _,
             denom,
         }
     }
     pub fn abs(self) -> Self {
-        Rational {
+        Self {
             num: self.num.abs(),
             denom: self.denom,
         }
@@ -85,7 +80,7 @@ impl Rational {
 
         let gcd = n;
 
-        Rational {
+        Self {
             num: self.num / Integer::from(gcd as i128),
             denom: self.denom / Natural::from(gcd),
         }
@@ -94,20 +89,16 @@ impl Rational {
 
 #[test]
 fn rational_signed_normalize() {
-    let minus_1 = Rational {
-        num: (-1i128).into(),
-        denom: 1u128.into(),
-    }
-    .normalized();
+    let minus_1 = Rational { num: -1, denom: 1 }.normalized();
 
     assert_eq!(rational(1.), minus_1 / minus_1);
 }
 
 impl From<i128> for Rational {
     fn from(n: i128) -> Self {
-        Rational {
+        Self {
             num: n.into(),
-            denom: 1u128.into(),
+            denom: 1,
         }
     }
 }
@@ -115,8 +106,8 @@ impl From<i128> for Rational {
 impl std::ops::Add for Rational {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Rational {
+    fn add(self, rhs: Self) -> Self {
+        Self {
             num: self.num * rhs.denom as i128 + self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
         }
@@ -126,8 +117,8 @@ impl std::ops::Add for Rational {
 impl std::ops::Sub for Rational {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
-        Rational {
+    fn sub(self, rhs: Self) -> Self {
+        Self {
             num: self.num * rhs.denom as i128 - self.denom as i128 * rhs.num,
             denom: self.denom * rhs.denom,
         }
@@ -137,8 +128,8 @@ impl std::ops::Sub for Rational {
 impl std::ops::Neg for Rational {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
-        Rational {
+    fn neg(self) -> Self {
+        Self {
             num: -self.num,
             denom: self.denom,
         }
@@ -148,20 +139,20 @@ impl std::ops::Neg for Rational {
 impl std::ops::Rem for Rational {
     type Output = Self;
 
-    fn rem(self, _: Self) -> Self::Output {
+    fn rem(self, _: Self) -> Self {
         Self::zero()
     }
 }
 impl std::ops::Div for Rational {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
-        Rational {
+    fn div(self, rhs: Self) -> Self {
+        Self {
             num: if rhs.num == rhs.num.abs() {
-                self.num * rhs.denom as i128
+                self.num
             } else {
-                -self.num * rhs.denom as i128
-            },
+                -self.num
+            } * rhs.denom as i128,
             denom: self.denom * rhs.num.unsigned_abs(),
         }
         .normalized()
@@ -170,8 +161,8 @@ impl std::ops::Div for Rational {
 impl std::ops::Mul for Rational {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
-        Rational {
+    fn mul(self, rhs: Self) -> Self {
+        Self {
             num: self.num * rhs.num,
             denom: self.denom * rhs.denom,
         }
@@ -181,10 +172,7 @@ impl std::ops::Mul for Rational {
 
 impl Identity<Addition> for Rational {
     fn identity() -> Self {
-        Rational {
-            num: 0i128.into(),
-            denom: 1u128.into(),
-        }
+        Self { num: 0, denom: 1 }
     }
 }
 impl Group for Rational {}
@@ -192,21 +180,18 @@ impl AbelianGroup for Rational {}
 
 impl Identity<Multiplication> for Rational {
     fn identity() -> Self {
-        Rational {
-            num: 1i128.into(),
-            denom: 1u128.into(),
-        }
+        Self { num: 1, denom: 1 }
     }
 }
 impl Ring for Rational {
     fn multiplicative_inverse(&self) -> Option<Self> {
         Some(match i128::from(self.num) {
             0 => 0.into(),
-            x if x < 0 => Rational {
+            x if x < 0 => Self {
                 num: -(self.denom as i128),
                 denom: self.num.unsigned_abs(),
             },
-            _ => Rational {
+            _ => Self {
                 num: self.denom as i128,
                 denom: self.num.unsigned_abs(),
             },

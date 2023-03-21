@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use tracing::debug;
 
-use crate::{Natural, Polynomial, Ring};
+use crate::prelude::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PrimitiveRootOfUnity<R> {
@@ -12,7 +12,7 @@ pub struct PrimitiveRootOfUnity<R> {
 
 impl<R> PrimitiveRootOfUnity<R> {
     /// Definition 8.5
-    pub fn new(n: Natural, omega: R) -> Option<PrimitiveRootOfUnity<R>>
+    pub fn new(n: Natural, omega: R) -> Option<Self>
     where
         R: Ring,
     {
@@ -33,7 +33,7 @@ impl<R> PrimitiveRootOfUnity<R> {
             return None;
         }
 
-        Some(PrimitiveRootOfUnity {
+        Some(Self {
             nth: n,
             value: omega,
             inverse,
@@ -52,7 +52,7 @@ impl<R> PrimitiveRootOfUnity<R> {
     where
         R: Clone + std::ops::Mul<Output = R>,
     {
-        PrimitiveRootOfUnity {
+        Self {
             nth: self.nth * 2,
             value: self.value.clone() * self.value,
             inverse: self.inverse.clone() * self.inverse,
@@ -107,60 +107,58 @@ pub fn fft<R: Ring + std::fmt::Debug>(
     let _enter = span.enter();
 
     if k == 0 {
-        vec![f.evaluate_at(R::zero())]
-    } else {
-        let n_div_2 = 2u128.pow((k - 1) as _);
-
-        let r0 = f
-            .iter()
-            .take(n_div_2 as _)
-            .map(|(c, pow)| c.clone() + f.coef_at(n_div_2 + pow))
-            .collect_vec();
-        let r0 = Polynomial::new(r0);
-        let r1 = f
-            .iter()
-            .take(n_div_2 as _)
-            .map(|(c, pow)| (c.clone() - f.coef_at(n_div_2 + pow)) * omega.pow(pow))
-            .collect_vec();
-        let r1 = Polynomial::new(r1);
-
-        debug!(
-            "r0 = {:?} = {r0:?}",
-            f.iter()
-                .take(n_div_2 as _)
-                .map(|(c, pow)| format!("({c:?} + {:?})*x^{pow}", f.coef_at(n_div_2 + pow)))
-                .collect_vec()
-        );
-        debug!(
-            "r1 = {:?} = {r1:?}",
-            f.iter()
-                .take(n_div_2 as _)
-                .map(|(c, pow)| format!(
-                    "({c:?} - {:?})*{:?}*x^{pow}",
-                    f.coef_at(n_div_2 + pow),
-                    omega.pow(pow)
-                ))
-                .collect_vec()
-        );
-
-        let omega_sq =
-            PrimitiveRootOfUnity::new(omega.n() / 2, omega.clone().inner() * omega.inner())
-                .unwrap();
-
-        let r0_eval = fft(k - 1, r0, omega_sq.clone());
-        let r1_eval = fft(k - 1, r1, omega_sq);
-
-        let res = r0_eval
-            .into_iter()
-            .interleave(r1_eval.into_iter())
-            .collect_vec();
-
-        assert_eq!(res.len(), 2usize.pow(u128::from(k) as u32));
-
-        debug!("result = {res:?}");
-
-        res
+        return vec![f.evaluate_at(R::zero())];
     }
+    let n_div_2 = 2u128.pow((k - 1) as _);
+
+    let r0 = f
+        .iter()
+        .take(n_div_2 as _)
+        .map(|(c, pow)| c.clone() + f.coef_at(n_div_2 + pow))
+        .collect_vec();
+    let r0 = Polynomial::new(r0);
+    let r1 = f
+        .iter()
+        .take(n_div_2 as _)
+        .map(|(c, pow)| (c.clone() - f.coef_at(n_div_2 + pow)) * omega.pow(pow))
+        .collect_vec();
+    let r1 = Polynomial::new(r1);
+
+    debug!(
+        "r0 = {:?} = {r0:?}",
+        f.iter()
+            .take(n_div_2 as _)
+            .map(|(c, pow)| format!("({c:?} + {:?})*x^{pow}", f.coef_at(n_div_2 + pow)))
+            .collect_vec()
+    );
+    debug!(
+        "r1 = {:?} = {r1:?}",
+        f.iter()
+            .take(n_div_2 as _)
+            .map(|(c, pow)| format!(
+                "({c:?} - {:?})*{:?}*x^{pow}",
+                f.coef_at(n_div_2 + pow),
+                omega.pow(pow)
+            ))
+            .collect_vec()
+    );
+
+    let omega_sq =
+        PrimitiveRootOfUnity::new(omega.n() / 2, omega.clone().inner() * omega.inner()).unwrap();
+
+    let r0_eval = fft(k - 1, r0, omega_sq.clone());
+    let r1_eval = fft(k - 1, r1, omega_sq);
+
+    let res = r0_eval
+        .into_iter()
+        .interleave(r1_eval.into_iter())
+        .collect_vec();
+
+    assert_eq!(res.len(), 2usize.pow(u128::from(k) as u32));
+
+    debug!("result = {res:?}");
+
+    res
 }
 
 #[cfg(test)]
@@ -171,7 +169,7 @@ mod tests {
     fn simple_fft() {
         type R = Finite<5>;
 
-        let f: Polynomial<R> = Polynomial::new([1, 1, 0, 1u128].map(R::from).to_vec());
+        let f = Polynomial::new([1, 1, 0, 1u128].map(R::from).to_vec());
 
         eprintln!("{f:?}");
 

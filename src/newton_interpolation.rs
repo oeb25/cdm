@@ -1,6 +1,6 @@
 use std::{collections::HashSet, fmt::Debug, hash::Hash};
 
-use crate::{field::Field, polynomials::Polynomial, Group};
+use crate::prelude::*;
 
 pub struct NewtonInterpolation<'a, F: Field> {
     samples: &'a [(F, F)],
@@ -51,7 +51,7 @@ where
             return Err(NewtonInterpolationError::SamplesNotUnique);
         }
 
-        let stuff: Vec<Vec<Option<F>>> = vec![vec![None; n]; n];
+        let stuff = vec![vec![None; n]; n];
 
         let mut ni = NewtonInterpolation { samples, stuff };
 
@@ -154,11 +154,10 @@ mod tests {
 
     use crate::{
         count_ops::{self, CountOps},
-        polynomials::Polynomial,
         Finite, Rational,
     };
 
-    use super::{newton, newton_slice, NewtonInterpolation, NewtonInterpolationError};
+    use super::{NewtonInterpolation, NewtonInterpolationError};
 
     #[test]
     fn example_a() -> Result<(), NewtonInterpolationError> {
@@ -208,7 +207,7 @@ mod tests {
         let f = NewtonInterpolation::run(&samples)?;
         // let f = newton(&samples.map(|(u, v)| u), |i| samples[i].1);
         let ops = count_ops::get_counts();
-        // assert!((ops.additions + ops.multiplications) as usize <= (5 * samples.len().pow(2)) / 2);
+        // assert!((ops.add + ops.mul) as usize <= (5 * samples.len().pow(2)) / 2);
 
         for (u, v) in samples {
             assert_eq!(f.evaluate_at(u), v, "f({u:?}) != {v:?}");
@@ -252,7 +251,7 @@ mod tests {
             let f = f.unwrap();
             // let f = newton_slice(&uv.iter().map(|(u, v)| u.clone()).collect_vec(), 0, |i| uv[i].1);
             let ops = count_ops::get_counts();
-            // assert!((ops.additions + ops.multiplications) as usize <= (5 * uv.len().pow(2)) / 2);
+            // assert!((ops.add + ops.mul) as usize <= (5 * uv.len().pow(2)) / 2);
 
             for (u, v) in uv {
                 assert_eq!(f.evaluate_at(u), v, "f({u:?}) != {v:?}");

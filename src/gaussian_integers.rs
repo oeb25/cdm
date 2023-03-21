@@ -1,12 +1,6 @@
 use derive_more::{Add, Div, From, Into, Mul, Neg, Rem, Sub};
 
-use crate::{
-    domain::Domain,
-    euclidean_domain::EuclideanDomain,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Integer, Natural, Ring,
-};
+use crate::prelude::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Add, Sub, Neg, From, Into)]
 // #[mul(forward)]
@@ -24,7 +18,7 @@ impl<F: std::fmt::Debug> std::fmt::Debug for Gaussian<F> {
 
 impl<F> Gaussian<F> {
     pub fn new(a: F, b: F) -> Self {
-        Gaussian { a, b }
+        Self { a, b }
     }
     pub fn map<T>(self, f: impl Fn(F) -> T) -> Gaussian<T> {
         Gaussian {
@@ -36,7 +30,7 @@ impl<F> Gaussian<F> {
     where
         F: std::ops::Neg<Output = F>,
     {
-        Gaussian {
+        Self {
             a: self.a,
             b: -self.b,
         }
@@ -49,12 +43,12 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
+    fn mul(self, rhs: Self) -> Self {
         // (a + bi)(c + di)
         // (ac + adi + bic + bidi)
         // (ac - bd + (ad + bc)i)
 
-        Gaussian {
+        Self {
             a: self.a.clone() * rhs.a.clone() - self.b.clone() * rhs.b.clone(),
             b: self.a.clone() * rhs.b + self.b * rhs.a,
         }
@@ -72,7 +66,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         // (a + bi)/(c + di) = (ac + bd + (bc - ad)i)/(cc + dd)
         // ((a + bi)*(c - di))/((c + di)*(c - di))
         // ((a + bi)*(c - di))/(cc + dd)
@@ -87,7 +81,7 @@ where
 
         let denum = c.clone() * c.clone() + d.clone() * d.clone();
 
-        let res = Gaussian {
+        let res = Self {
             a: (a.clone() * c.clone() + b.clone() * d.clone()) / denum.clone(),
             b: (b * c - a * d) / denum,
         };
@@ -101,7 +95,7 @@ where
 impl<F> std::ops::Rem for Gaussian<F> {
     type Output = Self;
 
-    fn rem(self, rhs: Self) -> Self::Output {
+    fn rem(self, rhs: Self) -> Self {
         todo!()
     }
 }
@@ -111,7 +105,7 @@ where
     F: Identity<Addition>,
 {
     fn identity() -> Self {
-        Gaussian {
+        Self {
             a: F::identity(),
             b: F::identity(),
         }
@@ -121,7 +115,7 @@ impl<F: Group> Group for Gaussian<F> {}
 impl<F: Group> AbelianGroup for Gaussian<F> {}
 impl<F: Identity<Multiplication> + Identity<Addition>> Identity<Multiplication> for Gaussian<F> {
     fn identity() -> Self {
-        Gaussian {
+        Self {
             a: <F as Identity<Multiplication>>::identity(),
             b: <F as Identity<Addition>>::identity(),
         }

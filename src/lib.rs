@@ -24,16 +24,9 @@ pub mod rationals;
 pub mod reals;
 pub mod ring;
 
-pub use finite::Finite;
-pub use group::Group;
-pub use integers::Integer;
-pub use mono::Monomial;
-use mono::MonomialOrder;
-pub use naturals::Natural;
-pub use polynomials::Polynomial;
-pub use rationals::Rational;
-pub use reals::Real;
-pub use ring::Ring;
+pub mod prelude;
+
+pub use crate::prelude::*;
 
 use crate::multivariate_polynomials::MultivariatePolynomial;
 

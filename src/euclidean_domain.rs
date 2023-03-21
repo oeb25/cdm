@@ -1,4 +1,4 @@
-use crate::{domain::Domain, naturals::Natural};
+use crate::prelude::*;
 
 /// <https://en.wikipedia.org/wiki/Euclidean_domain>
 pub trait EuclideanDomain:

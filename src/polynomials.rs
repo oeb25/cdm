@@ -1,34 +1,21 @@
 use itertools::Itertools;
 
-use crate::{
-    euclidean_domain::EuclideanDomain,
-    field::Field,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Natural, Ring,
-};
+use crate::prelude::*;
 
+/// The coefficients of the polynomial with the first entry being the
+/// constant term, that is:
+/// ```ignore
+/// ax^2 + bx + c == [c, b, a]
+/// ```
 #[derive(Clone)]
-pub struct Polynomial<F> {
-    /// The coefficients of the polynomial with the first entry being the
-    /// constant term, that is:
-    /// ```ignore
-    /// ax^2 + bx + c == [c, b, a]
-    /// ```
-    coefficients: Vec<F>,
-}
+pub struct Polynomial<F>(Vec<F>);
 
 impl<F> PartialEq for Polynomial<F>
 where
     F: PartialEq + Identity<Addition>,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.deg() == other.deg()
-            && self
-                .coefficients
-                .iter()
-                .zip(&other.coefficients)
-                .all(|(a, b)| a == b)
+        self.deg() == other.deg() && self.0.iter().eq(other.0.iter())
     }
 }
 impl<F> Eq for Polynomial<F> where F: PartialEq + Identity<Addition> {}
@@ -38,15 +25,15 @@ where
     F: std::fmt::Debug + Identity<Addition>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.coefficients.is_empty() {
+        if self.0.is_empty() {
             write!(f, "0")
         } else if Identity::<Addition>::is_identity(&self.deg()) {
-            write!(f, "{:?}", self.coefficients.first().unwrap())
+            write!(f, "{:?}", self.0.first().unwrap())
         } else {
             write!(
                 f,
                 "{}",
-                self.coefficients
+                self.0
                     .iter()
                     .enumerate()
                     .filter(|(_, c)| !c.is_identity())
@@ -66,25 +53,21 @@ where
     F: Identity<Addition>,
 {
     pub fn new(coefficients: Vec<F>) -> Self {
-        let mut p = Polynomial { coefficients };
-        p.normalize();
-        p
+        Self(coefficients).normalized()
     }
+
     pub fn normalize(&mut self) {
-        self.coefficients
-            .truncate(u128::from(self.deg()) as usize + 1);
+        self.0.truncate(u128::from(self.deg()) as usize + 1);
     }
-    pub fn normalized(&self) -> Self
-    where
-        F: Clone,
-    {
-        let mut normal = self.clone();
-        normal.normalize();
-        normal
+
+    pub fn normalized(mut self) -> Self {
+        self.normalize();
+        self
     }
+
     pub fn deg(&self) -> Natural {
         let deg = self
-            .coefficients
+            .0
             .iter()
             .enumerate()
             .rfind(|(_, c)| !F::is_identity(c))
@@ -103,20 +86,14 @@ where
     where
         F: Ring,
     {
-        Self {
-            coefficients: self
-                .coefficients
-                .iter()
-                .map(|c| c.clone() * s.clone())
-                .collect(),
-        }
+        Self(self.0.iter().map(|c| c.clone() * s.clone()).collect())
     }
 
     pub fn rem_pow(&self, deg: Natural) -> Self
     where
         F: Clone + std::fmt::Debug,
     {
-        let mut cs = self.coefficients.clone();
+        let mut cs = self.0.clone();
         cs.truncate(deg as usize);
         Self::new(cs)
     }
@@ -133,14 +110,13 @@ where
         let m = b.deg();
 
         assert!(n >= m, "n = {n:?}, m = {m:?} ({a:?}, {b:?})");
-        assert!(m >= 0);
 
         let mut r = a.clone();
         let u = b.lc().multiplicative_inverse()?;
 
         let mut q = vec![];
 
-        for i in (0..=u128::from(n - m)).rev() {
+        for i in (0..=(n - m).into()).rev() {
             if r.deg() == m + Natural::from(i) {
                 q.push(r.lc() * u.clone());
                 r = r - b.times_x(i).scale(q.last().unwrap());
@@ -151,29 +127,24 @@ where
 
         q.reverse();
 
-        Some((Polynomial { coefficients: q }, r))
+        Some((Self(q), r))
     }
 
     pub fn lc(&self) -> F
     where
         F: Group,
     {
-        self.coefficients
-            .last()
-            .cloned()
-            .unwrap_or_else(|| F::zero())
+        self.0.last().cloned().unwrap_or_else(|| F::zero())
     }
 
     pub fn times_x(&self, pow: u128) -> Self
     where
         F: Group,
     {
-        let mut new = Polynomial {
-            coefficients: self.coefficients.clone(),
-        };
+        let mut new = Self(self.0.clone());
 
         for _ in 0..pow {
-            new.coefficients.insert(0, F::zero());
+            new.0.insert(0, F::zero());
         }
 
         new.normalized()
@@ -185,30 +156,30 @@ where
     {
         let x = x.into();
 
-        self.coefficients
+        self.0
             .iter()
             .rev()
             .fold(F::zero(), move |sum, c| sum * x.clone() + c.clone())
     }
 
-    pub fn x() -> Polynomial<F>
+    pub fn x() -> Self
     where
         F: Identity<Addition> + Identity<Multiplication>,
     {
-        Polynomial::new(vec![
+        Self::new(vec![
             <F as Identity<Addition>>::identity(),
             <F as Identity<Multiplication>>::identity(),
         ])
     }
 
-    pub fn diff(&self) -> Polynomial<F>
+    pub fn diff(&self) -> Self
     where
         F: Ring,
     {
-        Polynomial::new(
+        Self::new(
             (1..=self.deg().into())
                 .map(|i| {
-                    self.coefficients[i as usize].clone()
+                    self.0[i as usize].clone()
                         * (0..i).map(|_| F::one()).reduce(|a, b| a + b).unwrap()
                 })
                 .collect(),
@@ -219,14 +190,8 @@ where
     where
         F: Clone,
     {
-        (
-            Polynomial {
-                coefficients: self.coefficients[0..at].to_vec(),
-            },
-            Polynomial {
-                coefficients: self.coefficients[at..].to_vec(),
-            },
-        )
+        let (left, right) = self.0.split_at(at);
+        (Self(left.into()), Self(right.into()))
     }
 
     pub fn rev(&self, deg: Natural) -> Self
@@ -246,7 +211,7 @@ where
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (&F, Natural)> {
-        self.coefficients
+        self.0
             .iter()
             .enumerate()
             .map(|(pow, c)| (c, (pow as u128).into()))
@@ -256,7 +221,7 @@ where
     where
         F: Clone,
     {
-        self.coefficients
+        self.0
             .get(u128::from(pow) as usize)
             .cloned()
             .unwrap_or_else(|| <F as Identity<Addition>>::identity())
@@ -318,13 +283,8 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
-        self.coefficients
-            .iter()
-            .enumerate()
-            .map(|(i, c)| rhs.scale(c).times_x(i as _))
-            .reduce(|a, b| a + b)
-            .unwrap()
+    fn mul(self, rhs: Self) -> Self {
+        &self * &rhs
     }
 }
 impl<F> std::ops::Mul<&Self> for Polynomial<F>
@@ -333,23 +293,18 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: &Self) -> Self::Output {
-        self.coefficients
-            .iter()
-            .enumerate()
-            .map(|(i, c)| rhs.scale(c).times_x(i as _))
-            .reduce(|a, b| a + b)
-            .unwrap()
+    fn mul(self, rhs: &Self) -> Self {
+        &self * rhs
     }
 }
-impl<F> std::ops::Mul<Self> for &Polynomial<F>
+impl<F> std::ops::Mul for &Polynomial<F>
 where
     F: Ring,
 {
     type Output = Polynomial<F>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        self.coefficients
+        self.0
             .iter()
             .enumerate()
             .map(|(i, c)| rhs.scale(c).times_x(i as _))
@@ -363,20 +318,18 @@ where
 {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Polynomial {
-            coefficients: self
-                .coefficients
+    fn add(self, rhs: Self) -> Self {
+        use itertools::EitherOrBoth;
+        Self(
+            self.0
                 .iter()
-                .zip_longest(&rhs.coefficients)
+                .zip_longest(&rhs.0)
                 .map(|cs| match cs {
-                    itertools::EitherOrBoth::Both(l, r) => l.clone() + r.clone(),
-                    itertools::EitherOrBoth::Left(c) | itertools::EitherOrBoth::Right(c) => {
-                        c.clone()
-                    }
+                    EitherOrBoth::Both(l, r) => l.clone() + r.clone(),
+                    EitherOrBoth::Left(c) | EitherOrBoth::Right(c) => c.clone(),
                 })
                 .collect(),
-        }
+        )
         .normalized()
     }
 }
@@ -386,11 +339,8 @@ where
 {
     type Output = Self;
 
-    fn neg(self) -> Self::Output {
-        Polynomial {
-            coefficients: self.coefficients.into_iter().map(|c| -c).collect(),
-        }
-        .normalized()
+    fn neg(self) -> Self {
+        Self(self.0.into_iter().map(|c| -c).collect()).normalized()
     }
 }
 impl<F> std::ops::Sub for Polynomial<F>
@@ -399,7 +349,7 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self {
         self + (-rhs)
     }
 }
@@ -409,12 +359,11 @@ where
 {
     type Output = Self;
 
-    fn rem(self, rhs: Self) -> Self::Output {
+    fn rem(self, rhs: Self) -> Self {
         if self.deg() < rhs.deg() {
-            self
-        } else {
-            self.div_rem(&rhs).unwrap().1.normalized()
+            return self;
         }
+        self.div_rem(&rhs).unwrap().1.normalized()
     }
 }
 impl<F> std::ops::Div for Polynomial<F>
@@ -423,7 +372,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, rhs: Self) -> Self {
         self.div_rem(&rhs).unwrap().0.normalized()
     }
 }
@@ -433,8 +382,8 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: F) -> Self::Output {
-        self - Self::new(vec![rhs])
+    fn sub(self, rhs: F) -> Self {
+        self - &rhs
     }
 }
 impl<F> std::ops::Sub<&'_ F> for Polynomial<F>
@@ -443,16 +392,14 @@ where
 {
     type Output = Self;
 
-    fn sub(self, rhs: &'_ F) -> Self::Output {
+    fn sub(self, rhs: &'_ F) -> Self {
         self - Self::new(vec![rhs.clone()])
     }
 }
 
 impl<F: Group> Identity<Addition> for Polynomial<F> {
     fn identity() -> Self {
-        Polynomial {
-            coefficients: vec![],
-        }
+        Self(vec![])
     }
 }
 impl<F: Group> Group for Polynomial<F> {}
@@ -463,9 +410,7 @@ where
     F: Identity<Multiplication> + Identity<Addition>,
 {
     fn identity() -> Self {
-        Polynomial {
-            coefficients: vec![<F as Identity<Multiplication>>::identity()],
-        }
+        Self(vec![<F as Identity<Multiplication>>::identity()])
     }
 }
 impl<F> Ring for Polynomial<F>

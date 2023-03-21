@@ -1,10 +1,4 @@
-use crate::{
-    domain::Domain,
-    euclidean_domain::EuclideanDomain,
-    group::AbelianGroup,
-    identity::{Addition, Identity, Multiplication},
-    Group, Natural, Ring,
-};
+use crate::prelude::*;
 
 pub type Integer = i128;
 
@@ -17,7 +11,7 @@ impl Group for i128 {}
 impl AbelianGroup for i128 {}
 impl Identity<Multiplication> for i128 {
     fn identity() -> Self {
-        1.into()
+        1
     }
 }
 impl Ring for i128 {

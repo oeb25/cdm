@@ -116,28 +116,28 @@ impl<F: Field, O: MonomialOrder<F>> MultivariateDivisionWithRemainder<F, O> {
 
         let mut buf = String::new();
 
-        write!(buf, "\\begin{{array}}{{r");
+        let _ = write!(buf, "\\begin{{array}}{{r");
         for _ in &self.fs {
-            write!(buf, "|r");
+            let _ = write!(buf, "|r");
         }
-        writeln!(buf, "|l}}");
+        let _ = writeln!(buf, "|l}}");
 
-        write!(buf, "\\multicolumn{{1}}{{c}}{{p}}");
+        let _ = write!(buf, "\\multicolumn{{1}}{{c}}{{p}}");
         for (i, _) in self.fs.iter().enumerate() {
-            write!(buf, "& \\multicolumn{{1}}{{|c}}{{q_{i}}}");
+            let _ = write!(buf, "& \\multicolumn{{1}}{{|c}}{{q_{i}}}");
         }
-        write!(buf, "& \\multicolumn{{1}}{{|c}}{{r}}");
-        writeln!(buf, "\\\\ \\hline");
+        let _ = write!(buf, "& \\multicolumn{{1}}{{|c}}{{r}}");
+        let _ = writeln!(buf, "\\\\ \\hline");
 
         for e in &self.rows {
-            write!(buf, "{}", e[0].to_latex());
+            let _ = write!(buf, "{}", e[0].to_latex());
             for p in &e[1..] {
-                write!(buf, "& {}", p.to_latex());
+                let _ = write!(buf, "& {}", p.to_latex());
             }
-            writeln!(buf, " \\\\ \\hline");
+            let _ = writeln!(buf, " \\\\ \\hline");
         }
 
-        writeln!(buf, "\\end{{array}}");
+        let _ = writeln!(buf, "\\end{{array}}");
 
         buf
         // $$

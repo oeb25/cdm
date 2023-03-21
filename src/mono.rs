@@ -3,13 +3,10 @@ use std::cmp::Ordering;
 use itertools::Itertools;
 
 use crate::{
-    field::Field,
-    identity::{Addition, Identity, Multiplication},
-    multivariate_polynomials::MultivariatePolynomial,
-    num_to_superscript,
-    rationals::rational,
-    Group, Natural, Rational, Ring,
+    multivariate_polynomials::MultivariatePolynomial, num_to_superscript, rationals::rational,
 };
+
+use crate::prelude::*;
 
 pub trait MonomialOrder<F>: Clone + std::fmt::Debug {
     fn ord(&self, l: &Monomial<F, Self>, r: &Monomial<F, Self>) -> Ordering;
@@ -156,7 +153,7 @@ pub enum Monomial<F, O: MonomialOrder<F>> {
 }
 impl<F: Default, O: MonomialOrder<F>> Default for Monomial<F, O> {
     fn default() -> Self {
-        Monomial::Constant(F::default())
+        Self::Constant(F::default())
     }
 }
 
@@ -166,117 +163,123 @@ where
     O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
+        use itertools::EitherOrBoth;
+
         self.coef() == other.coef()
             && self
                 .powers()
                 .iter()
                 .zip_longest(other.powers().iter())
-                .map(|ps| match ps {
-                    itertools::EitherOrBoth::Both(l, r) => l == r,
-                    itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => *p == 0,
+                .all(|ps| match ps {
+                    EitherOrBoth::Both(l, r) => l == r,
+                    EitherOrBoth::Left(p) | EitherOrBoth::Right(p) => *p == 0,
                 })
-                .all(|x| x)
     }
 }
 
 impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     pub fn new(ord: O, coef: impl Into<F>, powers: Vec<Natural>) -> Self {
-        Monomial::Mono {
+        Self::Mono {
             ord,
             coef: coef.into(),
             powers,
         }
     }
+
     pub fn try_new(ord: Option<O>, coef: impl Into<F>, powers: Vec<Natural>) -> Option<Self> {
         if let Some(ord) = ord {
-            Some(Monomial::new(ord.clone(), coef.into(), powers))
+            return Some(Self::new(ord.clone(), coef.into(), powers));
+        }
+        if powers.is_empty() || powers.iter().all(|c| *c == 0) {
+            Some(Self::constant(None, coef.into()))
         } else {
-            if powers.is_empty() || powers.iter().all(|c| *c == 0) {
-                Some(Monomial::constant(None, coef.into()))
-            } else {
-                None
-            }
+            None
         }
     }
+
     pub fn coef(&self) -> &F {
         match self {
-            Monomial::Constant(coef) | Monomial::Mono { coef, .. } => coef,
+            Self::Constant(coef) | Self::Mono { coef, .. } => coef,
         }
     }
+
     pub fn ord(&self) -> Option<&O> {
-        match self {
-            Monomial::Constant(_) => None,
-            Monomial::Mono { ord, .. } => Some(ord),
-        }
+        let Self::Mono { ord, .. } = self else { return None; };
+        ord.into()
     }
+
     pub fn constant(ord: Option<O>, coef: impl Into<F>) -> Self {
-        if let Some(ord) = ord {
-            Monomial::new(ord, coef, vec![])
-        } else {
-            Monomial::Constant(coef.into())
-        }
+        let Some(ord) = ord else { return Self::Constant(coef.into()); };
+        Self::new(ord, coef, vec![])
     }
+
     pub fn zero(ord: Option<O>) -> Self
     where
         F: Identity<Addition>,
     {
         Self::constant(ord, <F as Identity<Addition>>::identity())
     }
+
     pub fn is_zero(&self) -> bool
     where
         F: Identity<Addition>,
     {
         <F as Identity<Addition>>::is_identity(self.coef())
     }
+
     pub fn powers(&self) -> &[Natural] {
         match self {
-            Monomial::Constant(_) => &[],
-            Monomial::Mono { powers, .. } => powers,
+            Self::Constant(_) => &[],
+            Self::Mono { powers, .. } => powers,
         }
     }
-    pub fn without_coef(&self) -> Monomial<F, O>
+
+    pub fn without_coef(&self) -> Self
     where
         F: Identity<Multiplication>,
     {
         self.map_coef(|_| F::identity())
     }
-    pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Monomial<F, O> {
+
+    pub fn map_coef(&self, f: impl FnOnce(&F) -> F) -> Self {
         match self {
-            Monomial::Constant(coef) => Monomial::Constant(f(coef)),
-            Monomial::Mono { ord, coef, powers } => Monomial::Mono {
+            Self::Constant(coef) => Self::Constant(f(coef)),
+            Self::Mono { ord, coef, powers } => Self::Mono {
                 ord: ord.clone(),
                 coef: f(coef),
                 powers: powers.clone(),
             },
         }
     }
+
     pub fn ord_from<'a>(&'a self, rhs: &'a Self) -> Option<&'a O> {
         match (self, rhs) {
-            (Monomial::Constant(_), Monomial::Constant(_)) => None,
-            (Monomial::Mono { ord, .. }, _) => Some(ord),
-            (_, Monomial::Mono { ord, .. }) => Some(ord),
+            (Self::Constant(_), Self::Constant(_)) => None,
+            (Self::Mono { ord, .. }, _) => Some(ord),
+            (_, Self::Mono { ord, .. }) => Some(ord),
         }
     }
+
     pub fn div(&self, rhs: &Self) -> Option<Self>
     where
         F: Field + std::fmt::Debug,
     {
         // eprintln!("try div {self:?}/{rhs:?}");
-
+        use itertools::EitherOrBoth;
         let powers = self
             .powers()
             .iter()
             .zip_longest(rhs.powers())
             .map(|ps| match ps {
-                itertools::EitherOrBoth::Both(l, r) => {
+                EitherOrBoth::Both(l, r) => {
                     if l >= r {
                         Some(*l - *r)
                     } else {
                         None
                     }
                 }
-                itertools::EitherOrBoth::Left(l) => Some(*l),
-                itertools::EitherOrBoth::Right(r) => {
+                EitherOrBoth::Left(l) => Some(*l),
+                EitherOrBoth::Right(r) => {
                     if *r == 0 {
                         Some(0)
                     } else {
@@ -301,39 +304,38 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if Identity::<Addition>::is_identity(self.coef()) {
-            write!(f, "0")
+            return write!(f, "0");
         } else if Identity::<Multiplication>::is_identity(self.coef())
             && self.powers().iter().all(|p| *p == 0)
         {
-            write!(f, "1")
-        } else {
-            write!(
-                f,
-                "{}{}",
-                if Identity::<Multiplication>::is_identity(self.coef()) {
-                    "".to_string()
-                } else {
-                    format!("{:?}", self.coef())
-                },
-                self.powers()
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(idx, p)| {
-                        if *p == 0 {
-                            None
-                        } else if Identity::<Multiplication>::is_identity(p) {
-                            Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
-                        } else {
-                            Some(format!(
-                                "{}{}",
-                                ["x", "y", "z", "v", "w"][idx],
-                                num_to_superscript(*p as _)
-                            ))
-                        }
-                    })
-                    .format("")
-            )
+            return write!(f, "1");
         }
+        write!(
+            f,
+            "{}{}",
+            if Identity::<Multiplication>::is_identity(self.coef()) {
+                "".to_string()
+            } else {
+                format!("{:?}", self.coef())
+            },
+            self.powers()
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, p)| {
+                    if *p == 0 {
+                        None
+                    } else if Identity::<Multiplication>::is_identity(p) {
+                        Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
+                    } else {
+                        Some(format!(
+                            "{}{}",
+                            ["x", "y", "z", "v", "w"][idx],
+                            num_to_superscript(*p as _)
+                        ))
+                    }
+                })
+                .format("")
+        )
     }
 }
 
@@ -344,10 +346,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: Self) -> Self::Output {
-        let l = format!("{:?}", self);
-        let r = format!("{:?}", rhs);
-
+    fn mul(self, rhs: Self) -> Self {
         Self::try_new(
             self.ord_from(&rhs).cloned(),
             self.coef().clone() * rhs.coef().clone(),
@@ -368,7 +367,7 @@ where
 {
     type Output = Self;
 
-    fn mul(self, rhs: F) -> Self::Output {
+    fn mul(self, rhs: F) -> Self {
         Self::try_new(
             self.ord().cloned(),
             self.coef().clone() * rhs,
@@ -385,7 +384,7 @@ where
 {
     type Output = Self;
 
-    fn div(self, rhs: F) -> Self::Output {
+    fn div(self, rhs: F) -> Self {
         Self::try_new(
             self.ord().cloned(),
             self.coef().clone() / rhs,

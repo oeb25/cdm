@@ -42,13 +42,13 @@ where
         let mut f = String::new();
 
         if Identity::<Addition>::is_identity(self.coef()) {
-            write!(f, "0");
+            _ = write!(f, "0");
         } else if Identity::<Multiplication>::is_identity(self.coef())
             && self.powers().iter().all(|p| *p == 0)
         {
-            write!(f, "1");
+            _ = write!(f, "1");
         } else {
-            write!(
+            _ = write!(
                 f,
                 "{}{}",
                 if Identity::<Multiplication>::is_identity(self.coef()) {
