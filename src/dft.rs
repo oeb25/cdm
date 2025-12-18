@@ -16,11 +16,10 @@ impl<R> PrimitiveRootOfUnity<R> {
     where
         R: Ring,
     {
-        let n = n.into();
         let mut inverse = omega.clone();
         let mut pow = omega.clone();
 
-        for i in 1..u128::from(n) {
+        for _i in 1..n {
             // println!("{omega:?}^{i} = {pow:?}");
             if pow.is_one() || pow.is_zero() {
                 return None;
@@ -150,12 +149,9 @@ pub fn fft<R: Ring + std::fmt::Debug>(
         let r0_eval = fft(k - 1, r0, omega_sq.clone());
         let r1_eval = fft(k - 1, r1, omega_sq);
 
-        let res = r0_eval
-            .into_iter()
-            .interleave(r1_eval.into_iter())
-            .collect_vec();
+        let res = r0_eval.into_iter().interleave(r1_eval).collect_vec();
 
-        assert_eq!(res.len(), 2usize.pow(u128::from(k) as u32));
+        assert_eq!(res.len(), 2usize.pow(k as u32));
 
         debug!("result = {res:?}");
 

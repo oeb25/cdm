@@ -154,21 +154,16 @@ mod tests {
 
     use crate::{
         count_ops::{self, CountOps},
-        polynomials::Polynomial,
         Finite, Rational,
     };
 
-    use super::{newton, newton_slice, NewtonInterpolation, NewtonInterpolationError};
+    use super::{NewtonInterpolation, NewtonInterpolationError};
 
     #[test]
     fn example_a() -> Result<(), NewtonInterpolationError> {
         // let samples: [(CountOps<Rational>, CountOps<Rational>); 3] = [(0, 1), (1, 2), (2, 4)]
-        let samples: [(Finite<5>, Finite<5>); 3] = [(0, 1), (1, 2), (2, 4)].map(|(u, v)| {
-            (
-                Finite::from(u as i128).into(),
-                Finite::from(v as i128).into(),
-            )
-        });
+        let samples: [(Finite<5>, Finite<5>); 3] = [(0, 1), (1, 2), (2, 4)]
+            .map(|(u, v)| (Finite::from(u as i128), Finite::from(v as i128)));
 
         let f = NewtonInterpolation::run(&samples)?;
         // let f = newton_slice(&samples.map(|(u, v)| u), 0, |i| samples[i].1);
@@ -220,7 +215,7 @@ mod tests {
     fn example_c() -> Result<(), NewtonInterpolationError> {
         // let samples: [(CountOps<Rational>, CountOps<Rational>); 3] = [(0, 1), (1, 2), (2, 4)]
         let samples: [(Rational, Rational); 4] = [(-5, -2), (-1, 6), (0, -1), (2, 3)]
-            .map(|(u, v)| (Rational::from(u).into(), Rational::from(v).into()));
+            .map(|(u, v)| (Rational::from(u), Rational::from(v)));
 
         let f = NewtonInterpolation::run(&samples)?;
         println!("{f:?}");
@@ -235,7 +230,7 @@ mod tests {
     prop_compose! {
         fn samples()(n in 0..101usize)(us in prop::collection::vec(1..10u128, n), vs in prop::collection::vec(0..10u128, n)) -> Vec<(u128, u128)> {
             us.into_iter().scan(0, |state,x| {
-                *state = *state + x;
+                *state += x;
                 Some(*state)
             }).zip(vs.into_iter()).collect_vec()
         }

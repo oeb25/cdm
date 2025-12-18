@@ -24,9 +24,9 @@ where
                 .format(" + ")
         );
         if s.is_empty() {
-            format!("0")
+            "0".to_string()
         } else {
-            format!("{}", s)
+            s.to_string()
         }
     }
 }

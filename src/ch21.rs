@@ -168,7 +168,7 @@ impl<F: Field, O: MonomialOrder<F>> MultivariateDivisionWithRemainder<F, O> {
         table.set_header(
             std::iter::once("p".to_string())
                 // .chain(fs.iter().enumerate().map(|(i, _)| format!("q{i}")))
-                .chain(self.fs.iter().enumerate().map(|(i, f)| format!("{f:?}")))
+                .chain(self.fs.iter().map(|f| format!("{f:?}")))
                 .chain(std::iter::once("r".to_string())),
         );
 
@@ -216,13 +216,14 @@ where
 
                 let r = result.remainder();
 
-                if !r.is_zero() && !new.contains(&r) && !basis.contains(&r) {
-                    if !multivariate_division_with_remainder(&r, &new)
+                if !r.is_zero()
+                    && !new.contains(&r)
+                    && !basis.contains(&r)
+                    && !multivariate_division_with_remainder(&r, &new)
                         .remainder()
                         .is_zero()
-                    {
-                        new.push(r);
-                    }
+                {
+                    new.push(r);
                 }
             }
         }

@@ -57,6 +57,25 @@ fn test_plex() {
     assert_eq!(format!("{f:?}"), "4x³ + 7xy²z + 4xyz² + -5y⁴");
 }
 
+#[test]
+fn test_plex2() {
+    let ord = PLex(vec![2, 0, 1]);
+    println!();
+    let [x, y, z] = MultivariatePolynomial::<Rational, _>::init(ord);
+    let f = x(1) + y(1) + z(1);
+    match f {
+        MultivariatePolynomial::Constant(_) => todo!(),
+        MultivariatePolynomial::Terms { ord, terms } => {
+            for t in terms {
+                println!("{t:?}");
+            }
+        }
+    }
+    // println!("leading term of {f:?} = {:?}", f.leading_term());
+
+    panic!();
+}
+
 /// Graded lexicographic order.
 #[derive(Debug, Clone)]
 pub struct GrLex(pub Vec<usize>);
@@ -171,11 +190,10 @@ where
                 .powers()
                 .iter()
                 .zip_longest(other.powers().iter())
-                .map(|ps| match ps {
+                .all(|ps| match ps {
                     itertools::EitherOrBoth::Both(l, r) => l == r,
                     itertools::EitherOrBoth::Left(p) | itertools::EitherOrBoth::Right(p) => *p == 0,
                 })
-                .all(|x| x)
     }
 }
 
@@ -190,12 +208,10 @@ impl<F, O: MonomialOrder<F>> Monomial<F, O> {
     pub fn try_new(ord: Option<O>, coef: impl Into<F>, powers: Vec<Natural>) -> Option<Self> {
         if let Some(ord) = ord {
             Some(Monomial::new(ord.clone(), coef.into(), powers))
+        } else if powers.is_empty() || powers.iter().all(|c| *c == 0) {
+            Some(Monomial::constant(None, coef.into()))
         } else {
-            if powers.is_empty() || powers.iter().all(|c| *c == 0) {
-                Some(Monomial::constant(None, coef.into()))
-            } else {
-                None
-            }
+            None
         }
     }
     pub fn coef(&self) -> &F {
@@ -322,7 +338,7 @@ where
                         if *p == 0 {
                             None
                         } else if Identity::<Multiplication>::is_identity(p) {
-                            Some(format!("{}", ["x", "y", "z", "v", "w"][idx]))
+                            Some(["x", "y", "z", "v", "w"][idx].to_string())
                         } else {
                             Some(format!(
                                 "{}{}",
@@ -345,9 +361,6 @@ where
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let l = format!("{:?}", self);
-        let r = format!("{:?}", rhs);
-
         Self::try_new(
             self.ord_from(&rhs).cloned(),
             self.coef().clone() * rhs.coef().clone(),

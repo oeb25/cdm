@@ -1,4 +1,4 @@
-use derive_more::{Add, Div, From, Into, Mul, Neg, Rem, Sub};
+use derive_more::{Add, From, Into, Neg, Sub};
 
 use crate::{
     domain::Domain,
@@ -19,6 +19,11 @@ pub struct Gaussian<F> {
 impl<F: std::fmt::Debug> std::fmt::Debug for Gaussian<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?} + {:?}i", self.a, self.b)
+    }
+}
+impl<F: std::fmt::Display> std::fmt::Display for Gaussian<F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} + {}i", self.a, self.b)
     }
 }
 

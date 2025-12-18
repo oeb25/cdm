@@ -17,20 +17,18 @@ pub struct Rational {
 
 impl PartialEq for Rational {
     fn eq(&self, other: &Self) -> bool {
-        i128::from(self.num) as f64 / u128::from(self.denom) as f64
-            == i128::from(other.num) as f64 / u128::from(other.denom) as f64
+        self.num as f64 / self.denom as f64 == other.num as f64 / other.denom as f64
     }
 }
 impl std::hash::Hash for Rational {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        (((i128::from(self.num) as f64 / u128::from(self.denom) as f64) * 1000000.0) as i128)
-            .hash(state);
+        (((self.num as f64 / self.denom as f64) * 1000000.0) as i128).hash(state);
     }
 }
 
 impl std::fmt::Debug for Rational {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if u128::from(self.denom) == 1 {
+        if self.denom == 1 {
             write!(f, "{:?}", self.num)
         } else {
             write!(f, "{:?}/{:?}", self.num, self.denom)
@@ -74,8 +72,8 @@ impl Rational {
             return Self::zero();
         }
 
-        let mut n = u128::from(self.num.unsigned_abs());
-        let mut m = u128::from(self.denom);
+        let mut n = self.num.unsigned_abs();
+        let mut m = self.denom;
 
         while m != 0 {
             let tmp = n;
@@ -95,8 +93,8 @@ impl Rational {
 #[test]
 fn rational_signed_normalize() {
     let minus_1 = Rational {
-        num: (-1i128).into(),
-        denom: 1u128.into(),
+        num: -1i128,
+        denom: 1u128,
     }
     .normalized();
 
@@ -106,8 +104,8 @@ fn rational_signed_normalize() {
 impl From<i128> for Rational {
     fn from(n: i128) -> Self {
         Rational {
-            num: n.into(),
-            denom: 1u128.into(),
+            num: n,
+            denom: 1u128,
         }
     }
 }
@@ -182,8 +180,8 @@ impl std::ops::Mul for Rational {
 impl Identity<Addition> for Rational {
     fn identity() -> Self {
         Rational {
-            num: 0i128.into(),
-            denom: 1u128.into(),
+            num: 0i128,
+            denom: 1u128,
         }
     }
 }
@@ -193,14 +191,14 @@ impl AbelianGroup for Rational {}
 impl Identity<Multiplication> for Rational {
     fn identity() -> Self {
         Rational {
-            num: 1i128.into(),
-            denom: 1u128.into(),
+            num: 1i128,
+            denom: 1u128,
         }
     }
 }
 impl Ring for Rational {
     fn multiplicative_inverse(&self) -> Option<Self> {
-        Some(match i128::from(self.num) {
+        Some(match self.num {
             0 => 0.into(),
             x if x < 0 => Rational {
                 num: -(self.denom as i128),

@@ -18,7 +18,7 @@ pub fn chinese_remainder_algorithm<R: EuclideanDomain + PartialOrd>(ms: &[R], v:
     let m = ms.iter().cloned().reduce(|m0, m1| m0 * m1).unwrap();
     debug!("m = {m:?}");
     for (i, (mi, vi)) in ms.iter().zip(v).enumerate() {
-        let res = extended_euclidean_algorithm(&(m.clone() / mi.clone()), &mi);
+        let res = extended_euclidean_algorithm(&(m.clone() / mi.clone()), mi);
         debug!("EEA on {:?} and {:?}", m.clone() / mi.clone(), mi);
         println!("{}, {:?}", res, &res.s[res.s.len() - 2]);
         let ci = (vi.clone() * res.s[res.s.len() - 2].clone()) % mi.clone();

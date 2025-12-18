@@ -21,13 +21,10 @@ where
     O: MonomialOrder<F>,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.terms()
-            .zip_longest(other.terms())
-            .map(|ps| match ps {
-                itertools::EitherOrBoth::Both(l, r) => l == r,
-                itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => false,
-            })
-            .all(|x| x)
+        self.terms().zip_longest(other.terms()).all(|ps| match ps {
+            itertools::EitherOrBoth::Both(l, r) => l == r,
+            itertools::EitherOrBoth::Left(_) | itertools::EitherOrBoth::Right(_) => false,
+        })
     }
 }
 
@@ -204,10 +201,7 @@ where
     fn add(self, rhs: Self) -> Self::Output {
         Self::try_new(
             self.ord().or_else(|| rhs.ord()).cloned(),
-            self.terms()
-                .into_iter()
-                .chain(rhs.terms().into_iter())
-                .collect(),
+            self.terms().chain(rhs.terms()).collect(),
         )
         .unwrap()
     }
@@ -222,10 +216,7 @@ where
     fn neg(self) -> Self::Output {
         Self::try_new(
             self.ord().cloned(),
-            self.terms()
-                .into_iter()
-                .map(|t| t.map_coef(|c| -c.clone()))
-                .collect(),
+            self.terms().map(|t| t.map_coef(|c| -c.clone())).collect(),
         )
         .unwrap()
     }

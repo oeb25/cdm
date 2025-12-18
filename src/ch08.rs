@@ -5,12 +5,12 @@ use tracing::debug;
 
 use crate::{
     dft::{self, PrimitiveRootOfUnity},
-    euclidean_domain::EuclideanDomain,
+    field::Field,
     Natural, Polynomial, Ring,
 };
 
 /// Algorithm 8.1 Karatsuba’s polynomial multiplication algorithm
-pub fn karatsubas_polynomial_multiplication_algorithm<R: EuclideanDomain>(
+pub fn karatsubas_polynomial_multiplication_algorithm<R: Field>(
     k: Natural,
     f: Polynomial<R>,
     g: Polynomial<R>,

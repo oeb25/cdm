@@ -34,6 +34,7 @@ pub use polynomials::Polynomial;
 pub use rationals::Rational;
 pub use reals::Real;
 pub use ring::Ring;
+use tracing::level_filters::LevelFilter;
 
 use crate::multivariate_polynomials::MultivariatePolynomial;
 
@@ -109,7 +110,11 @@ pub fn mpoly_rat<const N: usize, O: MonomialOrder<Rational>>(
 
 pub fn init_tracing() {
     tracing_subscriber::fmt::fmt()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(LevelFilter::DEBUG.into())
+                .parse_lossy(""),
+        )
         .without_time()
         .with_filter_reloading()
         .init();

@@ -71,8 +71,7 @@ where
         p
     }
     pub fn normalize(&mut self) {
-        self.coefficients
-            .truncate(u128::from(self.deg()) as usize + 1);
+        self.coefficients.truncate(self.deg() as usize + 1);
     }
     pub fn normalized(&self) -> Self
     where
@@ -133,14 +132,13 @@ where
         let m = b.deg();
 
         assert!(n >= m, "n = {n:?}, m = {m:?} ({a:?}, {b:?})");
-        assert!(m >= 0);
 
         let mut r = a.clone();
         let u = b.lc().multiplicative_inverse()?;
 
         let mut q = vec![];
 
-        for i in (0..=u128::from(n - m)).rev() {
+        for i in (0..=(n - m)).rev() {
             if r.deg() == m + Natural::from(i) {
                 q.push(r.lc() * u.clone());
                 r = r - b.times_x(i).scale(q.last().unwrap());
@@ -206,7 +204,7 @@ where
         F: Ring,
     {
         Polynomial::new(
-            (1..=self.deg().into())
+            (1..=self.deg())
                 .map(|i| {
                     self.coefficients[i as usize].clone()
                         * (0..i).map(|_| F::one()).reduce(|a, b| a + b).unwrap()
@@ -249,7 +247,7 @@ where
         self.coefficients
             .iter()
             .enumerate()
-            .map(|(pow, c)| (c, (pow as u128).into()))
+            .map(|(pow, c)| (c, pow as u128))
     }
 
     pub fn coef_at(&self, pow: Natural) -> F
@@ -257,58 +255,9 @@ where
         F: Clone,
     {
         self.coefficients
-            .get(u128::from(pow) as usize)
+            .get(pow as usize)
             .cloned()
             .unwrap_or_else(|| <F as Identity<Addition>>::identity())
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::{ch03::ExtendedEuclideanAlgorithm, Group, Polynomial, Rational};
-    use proptest::prelude::*;
-
-    prop_compose! {
-        fn polynomial()(deg in 0..5usize)(cs in prop::collection::vec(0..10i128, deg))
-            -> Polynomial<Rational>
-        {
-            Polynomial::new(cs.into_iter().map(Rational::from).collect())
-        }
-    }
-
-    proptest! {
-        #[test]
-        fn polynomial_division(
-            a in polynomial(),
-            b in polynomial(),
-        ) {
-            prop_assume!(a.deg() >= b.deg());
-
-            if let Some((q, r)) = a.div_rem(&b) {
-                prop_assert_eq!(a, q * b + r);
-            }
-        }
-    }
-
-    proptest! {
-        #[test]
-        fn polynomial_eed(
-            a in polynomial(),
-            b in polynomial(),
-        ) {
-            prop_assume!(a.deg() >= b.deg());
-            prop_assume!(!a.is_zero() && !b.is_zero());
-
-            prop_assert!(ExtendedEuclideanAlgorithm::property(a, b));
-        }
-    }
-
-    #[test]
-    fn basic_div() {
-        let a = Polynomial::<Rational>::new([0, 1].map(Into::into).to_vec());
-        let b = Polynomial::<Rational>::new([1].map(Into::into).to_vec());
-
-        dbg!(a.div_rem(&b));
     }
 }
 
@@ -324,7 +273,7 @@ where
             .enumerate()
             .map(|(i, c)| rhs.scale(c).times_x(i as _))
             .reduce(|a, b| a + b)
-            .unwrap()
+            .unwrap_or_else(Polynomial::zero)
     }
 }
 impl<F> std::ops::Mul<&Self> for Polynomial<F>
@@ -339,7 +288,7 @@ where
             .enumerate()
             .map(|(i, c)| rhs.scale(c).times_x(i as _))
             .reduce(|a, b| a + b)
-            .unwrap()
+            .unwrap_or_else(Polynomial::zero)
     }
 }
 impl<F> std::ops::Mul<Self> for &Polynomial<F>
@@ -354,7 +303,7 @@ where
             .enumerate()
             .map(|(i, c)| rhs.scale(c).times_x(i as _))
             .reduce(|a, b| a + b)
-            .unwrap()
+            .unwrap_or_else(Polynomial::zero)
     }
 }
 impl<F> std::ops::Add for Polynomial<F>
@@ -480,5 +429,54 @@ where
 impl<F: Field + std::fmt::Debug> EuclideanDomain for Polynomial<F> {
     fn d(&self) -> Option<Natural> {
         Some(self.deg())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{ch03::ExtendedEuclideanAlgorithm, Group, Polynomial, Rational};
+    use proptest::prelude::*;
+
+    prop_compose! {
+        fn polynomial()(deg in 0..5usize)(cs in prop::collection::vec(0..10i128, deg))
+            -> Polynomial<Rational>
+        {
+            Polynomial::new(cs.into_iter().map(Rational::from).collect())
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn polynomial_division(
+            a in polynomial(),
+            b in polynomial(),
+        ) {
+            prop_assume!(a.deg() >= b.deg());
+
+            if let Some((q, r)) = a.div_rem(&b) {
+                prop_assert_eq!(a, q * b + r);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn polynomial_eed(
+            a in polynomial(),
+            b in polynomial(),
+        ) {
+            prop_assume!(a.deg() >= b.deg());
+            prop_assume!(!a.is_zero() && !b.is_zero());
+
+            prop_assert!(ExtendedEuclideanAlgorithm::property(a, b));
+        }
+    }
+
+    #[test]
+    fn basic_div() {
+        let a = Polynomial::<Rational>::new([0, 1].map(Into::into).to_vec());
+        let b = Polynomial::<Rational>::new([1].map(Into::into).to_vec());
+
+        dbg!(a.div_rem(&b));
     }
 }
